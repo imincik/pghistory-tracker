@@ -17,4 +17,4 @@ CREATE INDEX spx_v_layer
 	USING gist
 	(the_geom);
 
-SELECT GT_Register_Layer('layer')
+--SELECT GT_Register_Layer('layer')

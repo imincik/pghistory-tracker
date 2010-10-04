@@ -1,7 +1,13 @@
 --
 -- 						=== LAYERS ===								--
 --
-
+CREATE OR REPLACE FUNCTION gis.G_Get_Table_Fields(dbtable text) 
+	RETURNS SETOF RECORD AS 
+$$
+BEGIN
+	SELECT * FROM quote_ident(dbtable);
+END;
+$$ LANGUAGE plpgsql;
 
 
 -- !! FAKE FUNCTION
