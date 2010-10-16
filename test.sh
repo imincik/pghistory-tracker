@@ -22,17 +22,17 @@ psql ghistory -c "INSERT INTO gis.v_layer(aaa, the_geom) VALUES (111, (SELECT ST
 psql ghistory -c "INSERT INTO gis.v_layer(bbb, the_geom) VALUES ('bbb', (SELECT ST_GeomFromText('MULTILINESTRING((15 15,25 25))')));"
 psql ghistory -c "INSERT INTO gis.v_layer(ccc, the_geom) VALUES (true, (SELECT ST_GeomFromText('MULTILINESTRING((20 20,30 30))')));"
 psql ghistory -c "SELECT * FROM gis.v_layer;"
-psql ghistory -c "SELECT * FROM gis_history.hist_gis_v_layer;"
+psql ghistory -c "SELECT * FROM gis_history.gis__v_layer;"
 echo "**************************************************************************************"
 
 
 #test
 psql ghistory -c "DELETE FROM gis.v_layer WHERE bbb = 'bbb';"
 psql ghistory -c "SELECT * FROM gis.v_layer;"
-psql ghistory -c "SELECT * FROM gis_history.hist_gis_v_layer;"
+psql ghistory -c "SELECT * FROM gis_history.gis__v_layer;"
 
 psql ghistory -c "UPDATE gis.v_layer SET aaa = '100000' WHERE aaa = 111;"
 psql ghistory -c "SELECT * FROM gis.v_layer;"
-psql ghistory -c "SELECT * FROM gis_history.hist_gis_v_layer;"
+psql ghistory -c "SELECT * FROM gis_history.gis__v_layer;"
 
 psql ghistory -c   "SELECT * FROM v_layer_AtTime('2999-1-1');"

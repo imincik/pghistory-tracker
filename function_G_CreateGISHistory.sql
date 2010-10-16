@@ -11,23 +11,23 @@ vars = {'dbschema': dbschema, 'dbtable': dbtable, 'table_fields': table_fields}
 
 #HISTORY TAB
 sql_history_tab = """
-	CREATE TABLE gis_history.hist_%(dbschema)s_%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
+	CREATE TABLE gis_history.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
-	ALTER TABLE gis_history.hist_%(dbschema)s_%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
+	ALTER TABLE gis_history.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
 		ADD dbuser character varying, ADD id_hist serial;
-	ALTER TABLE gis_history.hist_%(dbschema)s_%(dbtable)s ADD PRIMARY KEY (id_hist);
+	ALTER TABLE gis_history.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
 
-	CREATE INDEX idx_hist_%(dbschema)s_%(dbtable)s_id_hist
-		ON gis_history.hist_%(dbschema)s_%(dbtable)s
+	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
+		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING btree (id_hist);
-	CREATE INDEX idx_hist_%(dbschema)s_%(dbtable)s_gid
-		ON gis_history.hist_%(dbschema)s_%(dbtable)s
+	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_gid
+		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING btree (gid);
-	CREATE INDEX spx_hist_%(dbschema)s_%(dbtable)s
-		ON gis_history.hist_%(dbschema)s_%(dbtable)s
+	CREATE INDEX spx_%(dbschema)s__%(dbtable)s
+		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING gist (the_geom);
 
-	COMMENT ON TABLE gis_history.hist_%(dbschema)s_%(dbtable)s IS 'GIS history table.';
+	COMMENT ON TABLE gis_history.%(dbschema)s__%(dbtable)s IS 'GIS history table.';
 """ % vars
 plpy.execute(sql_history_tab)
 
@@ -36,7 +36,7 @@ sql_attime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp)
 	RETURNS SETOF %(dbschema)s.%(dbtable)s AS
 	$$
-	SELECT %(table_fields)s FROM gis_history.hist_%(dbschema)s_%(dbtable)s WHERE
+	SELECT %(table_fields)s FROM gis_history.%(dbschema)s__%(dbtable)s WHERE
 		( SELECT CASE WHEN time_end IS NULL THEN (time_start <= $1) ELSE (time_start <= $1 AND time_end > $1) END );
 	$$
 	LANGUAGE 'SQL';
@@ -51,7 +51,7 @@ sql_insert_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		INSERT INTO gis_history.hist_%(dbschema)s_%(dbtable)s VALUES (NEW.*);	
+		INSERT INTO gis_history.%(dbschema)s__%(dbtable)s VALUES (NEW.*);	
 	RETURN NEW;
 	END;
 	$$
@@ -62,7 +62,7 @@ sql_insert_funct = """
 
 	
 	
-	CREATE OR REPLACE FUNCTION gis_history.tg_hist_%(dbschema)s_%(dbtable)s_insert()
+	CREATE OR REPLACE FUNCTION gis_history.tg_%(dbschema)s__%(dbtable)s_insert()
 	RETURNS trigger AS
 	$$
 	BEGIN
@@ -76,8 +76,8 @@ sql_insert_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
-	CREATE TRIGGER tg_hist_%(dbschema)s_%(dbtable)s_insert BEFORE INSERT ON gis_history.hist_%(dbschema)s_%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE gis_history.tg_hist_%(dbschema)s_%(dbtable)s_insert();
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON gis_history.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE gis_history.tg_%(dbschema)s__%(dbtable)s_insert();
 	""" % vars
 plpy.execute(sql_insert_funct)
 
@@ -90,7 +90,7 @@ sql_update_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		UPDATE gis_history.hist_%(dbschema)s_%(dbtable)s SET %(sql_update_str1)s WHERE gid = NEW.gid;
+		UPDATE gis_history.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE gid = NEW.gid;
 	RETURN NEW;
 	END;
 	$$
@@ -101,7 +101,7 @@ sql_update_funct = """
 
 
 
-	CREATE OR REPLACE FUNCTION gis_history.tg_hist_%(dbschema)s_%(dbtable)s_update()
+	CREATE OR REPLACE FUNCTION gis_history.tg_%(dbschema)s__%(dbtable)s_update()
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
@@ -109,7 +109,7 @@ sql_update_funct = """
 	RETURN NULL;
 	END IF;
 	IF NEW.time_end IS NULL THEN
-	INSERT INTO gis_history.hist_%(dbschema)s_%(dbtable)s
+	INSERT INTO gis_history.%(dbschema)s__%(dbtable)s
 		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, user);
 	NEW.time_start = current_timestamp;
 	END IF;
@@ -118,8 +118,8 @@ sql_update_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 	
-	CREATE TRIGGER tg_hist_%(dbschema)s_%(dbtable)s_update BEFORE UPDATE ON gis_history.hist_%(dbschema)s_%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE gis_history.tg_hist_%(dbschema)s_%(dbtable)s_update();
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON gis_history.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE gis_history.tg_%(dbschema)s__%(dbtable)s_update();
 """ % sql_update_vars
 plpy.execute(sql_update_funct)
 
@@ -129,7 +129,7 @@ sql_delete_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		DELETE FROM gis_history.hist_%(dbschema)s_%(dbtable)s WHERE gid = OLD.gid;
+		DELETE FROM gis_history.%(dbschema)s__%(dbtable)s WHERE gid = OLD.gid;
 	RETURN OLD;
 	END;
 	$$
@@ -139,8 +139,8 @@ sql_delete_funct = """
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_delete();
 
 
-	CREATE RULE hist_%(dbschema)s_%(dbtable)s_del AS ON DELETE TO gis_history.hist_%(dbschema)s_%(dbtable)s
-	DO INSTEAD UPDATE gis_history.hist_%(dbschema)s_%(dbtable)s SET time_end = current_timestamp, dbuser = user
+	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO gis_history.%(dbschema)s__%(dbtable)s
+	DO INSTEAD UPDATE gis_history.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 
 	
