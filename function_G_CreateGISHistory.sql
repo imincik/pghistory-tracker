@@ -13,7 +13,8 @@ vars = {'dbschema': dbschema, 'dbtable': dbtable, 'table_fields': table_fields}
 sql_history_tab = """
 	CREATE TABLE gis_history.hist_%(dbschema)s_%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
-	ALTER TABLE gis_history.hist_%(dbschema)s_%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, ADD id_hist serial;
+	ALTER TABLE gis_history.hist_%(dbschema)s_%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
+		ADD dbuser character varying, ADD id_hist serial;
 	ALTER TABLE gis_history.hist_%(dbschema)s_%(dbtable)s ADD PRIMARY KEY (id_hist);
 
 	CREATE INDEX idx_hist_%(dbschema)s_%(dbtable)s_id_hist
@@ -68,6 +69,7 @@ sql_insert_funct = """
   	if NEW.time_start IS NULL then
     		NEW.time_start = now();
     		NEW.time_end = null;
+		NEW.dbuser = user;
   	end if;
   	RETURN NEW;
 	END;
@@ -108,7 +110,7 @@ sql_update_funct = """
 	END IF;
 	IF NEW.time_end IS NULL THEN
 	INSERT INTO gis_history.hist_%(dbschema)s_%(dbtable)s
-		(%(table_fields)s, time_start, time_end) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp);
+		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, user);
 	NEW.time_start = current_timestamp;
 	END IF;
 	RETURN NEW;
@@ -138,7 +140,8 @@ sql_delete_funct = """
 
 
 	CREATE RULE hist_%(dbschema)s_%(dbtable)s_del AS ON DELETE TO gis_history.hist_%(dbschema)s_%(dbtable)s
-	DO INSTEAD UPDATE gis_history.hist_%(dbschema)s_%(dbtable)s SET time_end = current_timestamp WHERE id_hist = OLD.id_hist AND time_end IS NULL;
+	DO INSTEAD UPDATE gis_history.hist_%(dbschema)s_%(dbtable)s SET time_end = current_timestamp, dbuser = user
+		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 
 	
 """ % vars
