@@ -34,3 +34,5 @@ psql ghistory -c "SELECT * FROM gis_history.hist_gis_v_layer;"
 psql ghistory -c "UPDATE gis.v_layer SET aaa = '100000' WHERE aaa = 111;"
 psql ghistory -c "SELECT * FROM gis.v_layer;"
 psql ghistory -c "SELECT * FROM gis_history.hist_gis_v_layer;"
+
+psql ghistory -c   "select * FROM v_layer_AtTime('2999-1-1');"

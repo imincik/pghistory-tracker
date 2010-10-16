@@ -9,6 +9,7 @@ table_fields = plpy.execute("SELECT G_GetTableFields('%s', '%s')" % (dbschema, d
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'table_fields': table_fields} 
 
+#HISTORY TAB
 sql_history_tab = """
 	CREATE TABLE gis_history.hist_%(dbschema)s_%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
@@ -28,6 +29,20 @@ sql_history_tab = """
 	COMMENT ON TABLE gis_history.hist_%(dbschema)s_%(dbtable)s IS 'GIS history table.';
 """ % vars
 plpy.execute(sql_history_tab)
+
+#ATTIME FUNCTION 
+sql_attime_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp)
+	RETURNS SETOF %(dbschema)s.%(dbtable)s AS
+	$$
+	SELECT %(table_fields)s FROM gis_history.hist_%(dbschema)s_%(dbtable)s WHERE
+		( SELECT CASE WHEN time_end IS NULL THEN (time_start <= $1) ELSE (time_start <= $1 AND time_end > $1) END );
+	$$
+	LANGUAGE 'SQL';
+""" % vars
+plpy.execute(sql_attime_funct)
+
+
 
 #INSERT
 sql_insert_funct = """
