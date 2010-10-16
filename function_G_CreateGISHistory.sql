@@ -3,11 +3,15 @@ CREATE OR REPLACE FUNCTION gis.G_CreateGISHistory(dbschema text, dbtable text)
 	RETURNS integer AS
 $BODY$
 
+from datetime import datetime
+
 dbschema = args[0]
 dbtable = args[1]
+dbuser = plpy.execute("SELECT current_user")[0]['current_user']
 table_fields = plpy.execute("SELECT G_GetTableFields('%s', '%s')" % (dbschema, dbtable))[0]['g_gettablefields']
+dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable, 'table_fields': table_fields} 
+vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'dtime': dtime} 
 
 #HISTORY TAB
 sql_history_tab = """
@@ -27,7 +31,7 @@ sql_history_tab = """
 		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING gist (the_geom);
 
-	COMMENT ON TABLE gis_history.%(dbschema)s__%(dbtable)s IS 'GIS history table.';
+	COMMENT ON TABLE gis_history.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 plpy.execute(sql_history_tab)
 
