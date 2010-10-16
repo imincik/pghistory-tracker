@@ -1,5 +1,4 @@
---DROP FUNCTION gis.G_CreateGISHistory(text, text);
-CREATE OR REPLACE FUNCTION gis.G_CreateGISHistory(dbschema text, dbtable text)
+CREATE OR REPLACE FUNCTION G_CreateGISHistory(dbschema text, dbtable text)
 	RETURNS integer AS
 $BODY$
 

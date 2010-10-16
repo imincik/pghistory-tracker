@@ -1,5 +1,4 @@
---DROP FUNCTION gis.G_GetTableFields(text, text);
-CREATE OR REPLACE FUNCTION gis.G_GetTableFields(dbschema text, dbtable text)
+CREATE OR REPLACE FUNCTION G_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
 
