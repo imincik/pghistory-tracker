@@ -1,3 +1,4 @@
+CREATE SCHEMA gis;
 CREATE TABLE gis.v_layer
 (
 	gid serial PRIMARY KEY,
@@ -17,4 +18,17 @@ CREATE INDEX spx_v_layer
 	USING gist
 	(the_geom);
 
---SELECT GT_Register_Layer('layer')
+
+CREATE SCHEMA gisdata;
+CREATE TABLE gisdata.t_data
+(
+	id serial PRIMARY KEY,
+	eee integer,
+	fff character varying,
+	ggg boolean
+);
+CREATE INDEX idx_t_data_id
+	ON gis.t_data
+	USING btree
+	(id);
+
