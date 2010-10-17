@@ -8,9 +8,11 @@ dbschema = args[0]
 dbtable = args[1]
 dbuser = plpy.execute("SELECT current_user")[0]['current_user']
 table_fields = plpy.execute("SELECT G_GetTableFields('%s', '%s')" % (dbschema, dbtable))[0]['g_gettablefields']
+pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage \
+	WHERE table_schema = '%s' AND table_name = '%s'" % (dbschema, dbtable))[0]['column_name']
 dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'dtime': dtime} 
+vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
 
 #HISTORY TAB
 sql_history_tab = """
@@ -23,9 +25,9 @@ sql_history_tab = """
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
 		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING btree (id_hist);
-	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_gid
+	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_%(pkey)s
 		ON gis_history.%(dbschema)s__%(dbtable)s
-		USING btree (gid);
+		USING btree (%(pkey)s);
 
 	COMMENT ON TABLE gis_history.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
@@ -90,7 +92,7 @@ sql_update_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		UPDATE gis_history.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE gid = NEW.gid;
+		UPDATE gis_history.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE %(pkey)s = NEW.%(pkey)s;
 	RETURN NEW;
 	END;
 	$$
@@ -129,7 +131,7 @@ sql_delete_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		DELETE FROM gis_history.%(dbschema)s__%(dbtable)s WHERE gid = OLD.gid;
+		DELETE FROM gis_history.%(dbschema)s__%(dbtable)s WHERE %(pkey)s = OLD.%(pkey)s;
 	RETURN OLD;
 	END;
 	$$
