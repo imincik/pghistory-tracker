@@ -7,8 +7,8 @@ createlang plpythonu simple_versioning
 psql simple_versioning -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
 psql simple_versioning -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
 
-psql simple_versioning -c "CREATE SCHEMA sv_history;"
-find . -type f -iname "*.sql" -exec psql simple_versioning -f "{}" \;
+psql simple_versioning -f simple_pg_versioning.sql
+psql simple_versioning -f test.sql
 
 psql simple_versioning -c "SELECT SV_CreateHistory('gis', 'v_layer');"
 psql simple_versioning -c "SELECT SV_CreateHistory('gisdata', 't_data');"

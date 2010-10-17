@@ -1,0 +1,36 @@
+*** SIMPLE POSTGRESQL VERSIONING ***
+
+AUTHOR
+Ivan Mincik, Gista s.r.o., ivan.mincik@gista.sk
+
+
+ABOUT
+This project is set of functions which adds possibility to store full editing 
+history for Your database tables and recover its state to any time.
+
+
+LICENSE
+The GNU General Public License version 2 (GPLv2)
+
+
+INSTALLATION 
+Prerequisites:
+Assuming you have already working PostgreSQL database server. 
+In addition PL/Python procedural language is required. Under Debian install 
+package 'postgresql-plpython-8.3'.
+
+Preparing database:
+1. Adding PL/PgSQL language support: 'createlang plpgsql <database>'
+2. Adding PL/Python language support: 'createlang plpythonu <database>'
+3. Loading functions: 'psql <database> -f simple_pg_versioning.sql'
+
+
+USAGE
+1. Adding versioning support to table: 'SELECT SV_CreateHistory('<schema>', '<table>');'
+2. Retrieving table state in particulal time: 'SELECT * FROM <schema>.<table>_AtTime('<timestamp>');'
+
+
+NOTES
+Good resource on retrieving PostgreSQL table metadata:
+http://www.alberton.info/postgresql_meta_info.html
+
