@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION G_GetTableFields(dbschema text, dbtable text)
+CREATE OR REPLACE FUNCTION SV_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
 

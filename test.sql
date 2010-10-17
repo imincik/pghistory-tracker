@@ -28,7 +28,7 @@ CREATE TABLE gisdata.t_data
 	ggg boolean
 );
 CREATE INDEX idx_t_data_id
-	ON gis.t_data
+	ON gisdata.t_data
 	USING btree
 	(id);
 
