@@ -7,7 +7,7 @@ createlang plpythonu simple_versioning
 psql simple_versioning -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
 psql simple_versioning -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
 
-psql simple_versioning -f simple_pg_versioning.sql
+psql simple_versioning -f ../simple_pg_versioning.sql
 psql simple_versioning -f test.sql
 
 psql simple_versioning -c "SELECT SV_CreateHistory('gis', 'v_layer');"
@@ -39,7 +39,7 @@ psql simple_versioning -c "UPDATE gis.v_layer SET aaa = '100000' WHERE aaa = 111
 psql simple_versioning -c "SELECT * FROM gis.v_layer;"
 psql simple_versioning -c "SELECT * FROM sv_history.gis__v_layer;"
 
-psql simple_versioning -c   "SELECT * FROM gis.v_layer_AtTime('2999-1-1');"
+psql simple_versioning -c "SELECT * FROM gis.v_layer_AtTime('2999-1-1');"
 
 
 echo "************ GISDATA"
@@ -51,4 +51,4 @@ psql simple_versioning -c "UPDATE gisdata.t_data SET eee = '100000' WHERE eee = 
 psql simple_versioning -c "SELECT * FROM gisdata.t_data;"
 psql simple_versioning -c "SELECT * FROM sv_history.gisdata__t_data;"
 
-psql simple_versioning -c   "SELECT * FROM gisdata.t_data_AtTime('2999-1-1');"
+psql simple_versioning -c "SELECT * FROM gisdata.t_data_AtTime('2999-1-1');"
