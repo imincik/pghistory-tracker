@@ -26,9 +26,6 @@ sql_history_tab = """
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_gid
 		ON gis_history.%(dbschema)s__%(dbtable)s
 		USING btree (gid);
-	CREATE INDEX spx_%(dbschema)s__%(dbtable)s
-		ON gis_history.%(dbschema)s__%(dbtable)s
-		USING gist (the_geom);
 
 	COMMENT ON TABLE gis_history.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
