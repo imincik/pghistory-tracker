@@ -54,17 +54,24 @@ sql_history_tab = """
 	ALTER TABLE sv_history.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
 		ADD dbuser character varying, ADD id_hist serial;
 	ALTER TABLE sv_history.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
-
+	
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
 		ON sv_history.%(dbschema)s__%(dbtable)s
 		USING btree (id_hist);
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_%(pkey)s
 		ON sv_history.%(dbschema)s__%(dbtable)s
 		USING btree (%(pkey)s);
-
+	
 	COMMENT ON TABLE sv_history.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 plpy.execute(sql_history_tab)
+
+sql_history_tab2 = """
+	UPDATE sv_history.%(dbschema)s__%(dbtable)s SET time_start = now();
+""" % vars
+plpy.execute(sql_history_tab2)
+
+
 
 #ATTIME FUNCTION 
 sql_attime_funct = """
