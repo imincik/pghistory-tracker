@@ -41,6 +41,9 @@ psql simple_versioning -c "SELECT * FROM sv_history.gis__v_layer;"
 
 psql simple_versioning -c "SELECT * FROM gis.v_layer_AtTime('2999-1-1');"
 
+psql simple_versioning -c "SELECT SV_RemoveHistory('gis', 'v_layer');"
+psql simple_versioning -c "\dt gis.*"
+
 
 echo "************ GISDATA"
 psql simple_versioning -c "DELETE FROM gisdata.t_data WHERE fff = 'xxx';"
@@ -52,3 +55,17 @@ psql simple_versioning -c "SELECT * FROM gisdata.t_data;"
 psql simple_versioning -c "SELECT * FROM sv_history.gisdata__t_data;"
 
 psql simple_versioning -c "SELECT * FROM gisdata.t_data_AtTime('2999-1-1');"
+
+psql simple_versioning -c "SELECT SV_RemoveHistory('gisdata', 't_data');"
+psql simple_versioning -c "\dt gisdata.*"
+
+
+psql simple_versioning -c "\dt sv_history.*"
+
+
+psql simple_versioning -c "SELECT SV_CreateHistory('gis', 'v_layer');"
+psql simple_versioning -c "SELECT SV_CreateHistory('gisdata', 't_data');"
+psql simple_versioning -c "SELECT * FROM gis.v_layer;"
+psql simple_versioning -c "SELECT * FROM sv_history.gis__v_layer;"
+psql simple_versioning -c "SELECT * FROM gis.v_layer;"
+psql simple_versioning -c "SELECT * FROM sv_history.gis__v_layer;"

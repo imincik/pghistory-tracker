@@ -192,3 +192,63 @@ return 1
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
+
+
+-- SV_RemoveHistory
+CREATE OR REPLACE FUNCTION SV_RemoveHistory(dbschema text, dbtable text)
+	RETURNS integer AS
+$BODY$
+
+dbschema = args[0]
+dbtable = args[1]
+
+vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+
+#INSERT
+sql_insert_funct = """
+	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_insert ON sv_history.%(dbschema)s__%(dbtable)s;
+	DROP FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_insert();
+
+	DROP TRIGGER tg_%(dbtable)s_insert ON %(dbschema)s.%(dbtable)s;
+	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_insert();
+	""" % vars
+plpy.execute(sql_insert_funct)
+
+#UPDATE
+sql_update_funct = """
+	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_update ON sv_history.%(dbschema)s__%(dbtable)s;	
+	DROP FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_update();
+	
+	DROP TRIGGER tg_%(dbtable)s_update ON %(dbschema)s.%(dbtable)s;
+	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_update();
+""" % vars
+plpy.execute(sql_update_funct)
+
+#DELETE
+sql_delete_funct = """
+	DROP RULE %(dbschema)s__%(dbtable)s_del ON sv_history.%(dbschema)s__%(dbtable)s;
+	
+	DROP TRIGGER tg_%(dbtable)s_delete ON %(dbschema)s.%(dbtable)s;
+	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_delete();
+""" % vars
+plpy.execute(sql_delete_funct)
+
+#ATTIME FUNCTION 
+sql_attime_funct = """
+	DROP FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp);
+""" % vars
+plpy.execute(sql_attime_funct)
+
+#HISTORY TAB
+sql_history_tab = """
+	DROP TABLE sv_history.%(dbschema)s__%(dbtable)s;
+""" % vars
+plpy.execute(sql_history_tab)
+
+return 1
+
+$BODY$
+LANGUAGE 'plpythonu' VOLATILE;
+
+-- # vim: set syntax=python ts=8 sts=8 sw=8 noet: 
