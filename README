@@ -6,7 +6,9 @@ Ivan Mincik, Gista s.r.o., ivan.mincik@gista.sk
 
 ABOUT
 This project is set of functions which adds possibility to store full editing 
-history for Your database tables and recover its state to any time.
+history for Your database tables and recover its state to any time. Inspiration was 
+taken from versioning functions created by Horst Duester and Andreas Neumann, 
+but implemented in other way. (http://www.kappasys.ch/pgtools/pghistory/index.html)
 
 
 LICENSE
@@ -28,6 +30,12 @@ Preparing database:
 USAGE
 1. Adding versioning support to table: 'SELECT SV_CreateHistory('<schema>', '<table>');'
 2. Retrieving table state in particulal time: 'SELECT * FROM <schema>.<table>_AtTime('<timestamp>');'
+
+
+MORE EXAMPLES OF RETRIEVING TABLE HISTORY
+1. Current state: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp);'
+2. Five minutes ago: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp - INTERVAL '5 minutes');'
+3. One hour ago: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp - INTERVAL '1 hour');'
 
 
 NOTES
