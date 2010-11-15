@@ -1,4 +1,4 @@
-*** SIMPLE POSTGRESQL VERSIONING ***
+*** POSTGRESQL HISTORY TRACKER ***
 
 AUTHOR
 Ivan Mincik, Gista s.r.o., ivan.mincik@gista.sk
@@ -24,11 +24,11 @@ package 'postgresql-plpython-8.3'.
 Preparing database:
 1. Adding PL/PgSQL language support: 'createlang plpgsql <database>'
 2. Adding PL/Python language support: 'createlang plpythonu <database>'
-3. Loading functions: 'psql <database> -f simple_pg_versioning.sql'
+3. Loading functions: 'psql <database> -f history_tracker.sql'
 
 
 USAGE
-1. Adding versioning support to table: 'SELECT SV_CreateHistory('<schema>', '<table>');'
+1. Adding versioning support to table: 'SELECT HT_CreateHistory('<schema>', '<table>');'
 2. Retrieving table state in particulal time: 'SELECT * FROM <schema>.<table>_AtTime('<timestamp>');'
 
 

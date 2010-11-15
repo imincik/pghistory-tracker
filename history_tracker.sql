@@ -1,9 +1,9 @@
 -- CREATE SCHEMA
-CREATE SCHEMA sv_history;
+CREATE SCHEMA hist_tracker;
 
 
--- SV_GetTableFields
-CREATE OR REPLACE FUNCTION SV_GetTableFields(dbschema text, dbtable text)
+-- HT_GetTableFields
+CREATE OR REPLACE FUNCTION HT_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
 
@@ -30,8 +30,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- SV_CreateHistory
-CREATE OR REPLACE FUNCTION SV_CreateHistory(dbschema text, dbtable text)
+-- HT_CreateHistory
+CREATE OR REPLACE FUNCTION HT_CreateHistory(dbschema text, dbtable text)
 	RETURNS integer AS
 $BODY$
 
@@ -40,7 +40,7 @@ from datetime import datetime
 dbschema = args[0]
 dbtable = args[1]
 dbuser = plpy.execute("SELECT current_user")[0]['current_user']
-table_fields = plpy.execute("SELECT SV_GetTableFields('%s', '%s')" % (dbschema, dbtable))[0]['sv_gettablefields']
+table_fields = plpy.execute("SELECT HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
 pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage \
 	WHERE table_schema = '%s' AND table_name = '%s'" % (dbschema, dbtable))[0]['column_name']
 dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -49,25 +49,25 @@ vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_field
 
 #HISTORY TAB
 sql_history_tab = """
-	CREATE TABLE sv_history.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
+	CREATE TABLE hist_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
-	ALTER TABLE sv_history.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
+	ALTER TABLE hist_tracker.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
 		ADD dbuser character varying, ADD id_hist serial;
-	ALTER TABLE sv_history.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
+	ALTER TABLE hist_tracker.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
 	
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
-		ON sv_history.%(dbschema)s__%(dbtable)s
+		ON hist_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (id_hist);
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_%(pkey)s
-		ON sv_history.%(dbschema)s__%(dbtable)s
+		ON hist_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (%(pkey)s);
 	
-	COMMENT ON TABLE sv_history.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
+	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 plpy.execute(sql_history_tab)
 
 sql_history_tab2 = """
-	UPDATE sv_history.%(dbschema)s__%(dbtable)s SET time_start = now();
+	UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_start = now();
 """ % vars
 plpy.execute(sql_history_tab2)
 
@@ -78,7 +78,7 @@ sql_attime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp)
 	RETURNS SETOF %(dbschema)s.%(dbtable)s AS
 	$$
-	SELECT %(table_fields)s FROM sv_history.%(dbschema)s__%(dbtable)s WHERE
+	SELECT %(table_fields)s FROM hist_tracker.%(dbschema)s__%(dbtable)s WHERE
 		( SELECT CASE WHEN time_end IS NULL THEN (time_start <= $1) ELSE (time_start <= $1 AND time_end > $1) END );
 	$$
 	LANGUAGE 'SQL';
@@ -93,7 +93,7 @@ sql_insert_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		INSERT INTO sv_history.%(dbschema)s__%(dbtable)s VALUES (NEW.*);	
+		INSERT INTO hist_tracker.%(dbschema)s__%(dbtable)s VALUES (NEW.*);	
 	RETURN NEW;
 	END;
 	$$
@@ -104,7 +104,7 @@ sql_insert_funct = """
 
 	
 	
-	CREATE OR REPLACE FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_insert()
+	CREATE OR REPLACE FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert()
 	RETURNS trigger AS
 	$$
 	BEGIN
@@ -118,8 +118,8 @@ sql_insert_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
-	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON sv_history.%(dbschema)s__%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE sv_history.tg_%(dbschema)s__%(dbtable)s_insert();
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON hist_tracker.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
 	""" % vars
 plpy.execute(sql_insert_funct)
 
@@ -132,7 +132,7 @@ sql_update_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		UPDATE sv_history.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE %(pkey)s = NEW.%(pkey)s;
+		UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE %(pkey)s = NEW.%(pkey)s;
 	RETURN NEW;
 	END;
 	$$
@@ -143,7 +143,7 @@ sql_update_funct = """
 
 
 
-	CREATE OR REPLACE FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_update()
+	CREATE OR REPLACE FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_update()
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
@@ -151,7 +151,7 @@ sql_update_funct = """
 	RETURN NULL;
 	END IF;
 	IF NEW.time_end IS NULL THEN
-	INSERT INTO sv_history.%(dbschema)s__%(dbtable)s
+	INSERT INTO hist_tracker.%(dbschema)s__%(dbtable)s
 		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, user);
 	NEW.time_start = current_timestamp;
 	END IF;
@@ -160,8 +160,8 @@ sql_update_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 	
-	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON sv_history.%(dbschema)s__%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE sv_history.tg_%(dbschema)s__%(dbtable)s_update();
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON hist_tracker.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_update();
 """ % sql_update_vars
 plpy.execute(sql_update_funct)
 
@@ -171,7 +171,7 @@ sql_delete_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		DELETE FROM sv_history.%(dbschema)s__%(dbtable)s WHERE %(pkey)s = OLD.%(pkey)s;
+		DELETE FROM hist_tracker.%(dbschema)s__%(dbtable)s WHERE %(pkey)s = OLD.%(pkey)s;
 	RETURN OLD;
 	END;
 	$$
@@ -181,8 +181,8 @@ sql_delete_funct = """
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_delete();
 
 
-	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO sv_history.%(dbschema)s__%(dbtable)s
-	DO INSTEAD UPDATE sv_history.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = user
+	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO hist_tracker.%(dbschema)s__%(dbtable)s
+	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 
 	
@@ -195,8 +195,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- SV_RemoveHistory
-CREATE OR REPLACE FUNCTION SV_RemoveHistory(dbschema text, dbtable text)
+-- HT_RemoveHistory
+CREATE OR REPLACE FUNCTION HT_RemoveHistory(dbschema text, dbtable text)
 	RETURNS integer AS
 $BODY$
 
@@ -207,8 +207,8 @@ vars = {'dbschema': dbschema, 'dbtable': dbtable}
 
 #INSERT
 sql_insert_funct = """
-	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_insert ON sv_history.%(dbschema)s__%(dbtable)s;
-	DROP FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_insert();
+	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_insert ON hist_tracker.%(dbschema)s__%(dbtable)s;
+	DROP FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
 
 	DROP TRIGGER tg_%(dbtable)s_insert ON %(dbschema)s.%(dbtable)s;
 	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_insert();
@@ -217,8 +217,8 @@ plpy.execute(sql_insert_funct)
 
 #UPDATE
 sql_update_funct = """
-	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_update ON sv_history.%(dbschema)s__%(dbtable)s;	
-	DROP FUNCTION sv_history.tg_%(dbschema)s__%(dbtable)s_update();
+	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_update ON hist_tracker.%(dbschema)s__%(dbtable)s;	
+	DROP FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_update();
 	
 	DROP TRIGGER tg_%(dbtable)s_update ON %(dbschema)s.%(dbtable)s;
 	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_update();
@@ -227,7 +227,7 @@ plpy.execute(sql_update_funct)
 
 #DELETE
 sql_delete_funct = """
-	DROP RULE %(dbschema)s__%(dbtable)s_del ON sv_history.%(dbschema)s__%(dbtable)s;
+	DROP RULE %(dbschema)s__%(dbtable)s_del ON hist_tracker.%(dbschema)s__%(dbtable)s;
 	
 	DROP TRIGGER tg_%(dbtable)s_delete ON %(dbschema)s.%(dbtable)s;
 	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_delete();
@@ -242,7 +242,7 @@ plpy.execute(sql_attime_funct)
 
 #HISTORY TAB
 sql_history_tab = """
-	DROP TABLE sv_history.%(dbschema)s__%(dbtable)s;
+	DROP TABLE hist_tracker.%(dbschema)s__%(dbtable)s;
 """ % vars
 plpy.execute(sql_history_tab)
 
