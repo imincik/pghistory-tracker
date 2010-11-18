@@ -111,7 +111,7 @@ sql_insert_funct = """
   	if NEW.time_start IS NULL then
     		NEW.time_start = now();
     		NEW.time_end = null;
-		NEW.dbuser = user;
+		NEW.dbuser = current_user;
   	end if;
   	RETURN NEW;
 	END;
@@ -152,7 +152,7 @@ sql_update_funct = """
 	END IF;
 	IF NEW.time_end IS NULL THEN
 	INSERT INTO hist_tracker.%(dbschema)s__%(dbtable)s
-		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, user);
+		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, current_user);
 	NEW.time_start = current_timestamp;
 	END IF;
 	RETURN NEW;
@@ -182,7 +182,7 @@ sql_delete_funct = """
 
 
 	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO hist_tracker.%(dbschema)s__%(dbtable)s
-	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = user
+	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 
 	
