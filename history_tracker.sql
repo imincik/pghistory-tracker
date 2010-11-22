@@ -6,6 +6,9 @@
 -- CREATE SCHEMA
 CREATE SCHEMA hist_tracker;
 
+
+
+
 -- CREATE TABLES
 CREATE TABLE hist_tracker.tags (
 	id serial PRIMARY KEY,
@@ -16,6 +19,8 @@ CREATE TABLE hist_tracker.tags (
 	changes_count integer,
 	message character varying
 );
+
+
 
 
 -- HT_GetTableFields
@@ -43,6 +48,9 @@ return ','.join(f for f in table_fields)
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
+
+
 
 -- HT_Create_DiffType
 CREATE OR REPLACE FUNCTION HT_Create_DiffType(dbschema text, dbtable text)
@@ -77,6 +85,8 @@ return True
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
+
 
 
 -- HT_CreateHistory
@@ -126,7 +136,7 @@ plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag
 	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
 
 
-#ATTIME FUNCTION 
+#AtTime function 
 sql_attime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp)
 	RETURNS SETOF %(dbschema)s.%(dbtable)s AS
@@ -140,6 +150,7 @@ plpy.execute(sql_attime_funct)
 
 sql_create_difftype = "SELECT HT_Create_DiffType('%(dbschema)s', '%(dbtable)s');" % vars
 plpy.execute(sql_create_difftype)
+
 
 #DiffToTime function
 sql_difftotime_funct = """
@@ -166,6 +177,7 @@ sql_difftotime_funct = """
 	LANGUAGE 'plpgsql';
 """ % vars
 plpy.execute(sql_difftotime_funct)
+
 
 #INSERT
 sql_insert_funct = """
@@ -202,6 +214,7 @@ sql_insert_funct = """
 	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
 	""" % vars
 plpy.execute(sql_insert_funct)
+
 
 #UPDATE
 sql_update_vars = vars
@@ -245,6 +258,7 @@ sql_update_funct = """
 """ % sql_update_vars
 plpy.execute(sql_update_funct)
 
+
 #DELETE
 sql_delete_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.tg_%(dbtable)s_delete()
@@ -270,6 +284,7 @@ return 1
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
 
 
 
@@ -336,6 +351,8 @@ return 1
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
+
 
 
 -- HT_Tag
