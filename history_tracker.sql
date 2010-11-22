@@ -28,9 +28,9 @@ dbtable = args[1]
 vars = {'dbschema': dbschema, 'dbtable': dbtable} 
 
 sql = """
-SELECT column_name FROM information_schema.columns
-	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
-	ORDER BY ordinal_position;
+	SELECT column_name FROM information_schema.columns
+		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
+		ORDER BY ordinal_position;
 """ % vars
 ret = plpy.execute(sql)
 
@@ -54,9 +54,9 @@ dbtable = args[1]
 vars = {'dbschema': dbschema, 'dbtable': dbtable} 
 
 sql_type_schema = """
-SELECT column_name, udt_name FROM information_schema.columns
-	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
-	ORDER BY ordinal_position;
+	SELECT column_name, udt_name FROM information_schema.columns
+		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
+		ORDER BY ordinal_position;
 """ % vars
 ret_type_schema = plpy.execute(sql_type_schema)
 
@@ -68,7 +68,8 @@ if len(ret_type_schema):
 vars['type_schema_def'] = ','.join(f for f in type_schema)
 
 sql_create_type = """
-CREATE TYPE %(dbschema)s.ht_%(dbtable)s_difftype AS (operation character(1), %(type_schema_def)s);
+	CREATE TYPE %(dbschema)s.ht_%(dbtable)s_difftype AS 
+		(operation character(1), %(type_schema_def)s);
 """ % vars
 plpy.execute(sql_create_type)
 
@@ -111,7 +112,8 @@ sql_history_tab = """
 		ON hist_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (%(pkey)s);
 	
-	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
+	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 
+		'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 plpy.execute(sql_history_tab)
 
@@ -119,7 +121,6 @@ sql_history_tab2 = """
 	UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_start = now();
 """ % vars
 plpy.execute(sql_history_tab2)
-
 
 plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message, changes_count) \
 	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
@@ -263,8 +264,6 @@ sql_delete_funct = """
 	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO hist_tracker.%(dbschema)s__%(dbtable)s
 	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
-
-	
 """ % vars
 plpy.execute(sql_delete_funct)
 return 1
@@ -354,17 +353,18 @@ pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
 
 sql_table_exists = """
-SELECT COUNT(*) AS count FROM information_schema.tables
-	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
-	table_type = 'BASE TABLE';
+	SELECT COUNT(*) AS count FROM information_schema.tables
+		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
+		table_type = 'BASE TABLE';
 """ % vars
 table_exists = plpy.execute(sql_table_exists)
 
-time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
+time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tracker.tags WHERE \
+	dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
 vars['time_last_tag'] = time_last_tag[0]['time_last_tag']
 
 if table_exists[0]['count'] == 1:
-	sql_changes_count = """SELECT COUNT(*) AS count FROM (
+	sql_changes_count = """	SELECT COUNT(*) AS count FROM (
 				SELECT * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
 					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
 						WHERE time_start > '%(time_last_tag)s' AND time_end IS NULL)
@@ -393,7 +393,5 @@ else:
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
-
-
 
 -- # vim: set syntax=python ts=8 sts=8 sw=8 noet: 
