@@ -1,3 +1,9 @@
+--TODO:
+-- add changes_count column to hist_tracker.tags
+-- ht_log
+-- ht_count_changes
+-- ht_diff
+
 -- CREATE SCHEMA
 CREATE SCHEMA hist_tracker;
 
@@ -37,6 +43,38 @@ return ','.join(f for f in table_fields)
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
 
+-- HT_Create_DiffType
+CREATE OR REPLACE FUNCTION HT_Create_DiffType(dbschema text, dbtable text)
+	RETURNS text AS
+$BODY$
+
+dbschema = args[0]
+dbtable = args[1]
+vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+
+sql_type_schema = """
+SELECT column_name, udt_name FROM information_schema.columns
+	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
+	ORDER BY ordinal_position;
+""" % vars
+ret_type_schema = plpy.execute(sql_type_schema)
+
+if len(ret_type_schema):
+	type_schema = []
+	for r in ret_type_schema:
+		type_schema.append('%s %s' % (r['column_name'], r['udt_name']))
+		
+vars['type_schema_def'] = ','.join(f for f in type_schema)
+
+sql_create_type = """
+CREATE TYPE %(dbschema)s.ht_%(dbtable)s_difftype AS (operation character(1), %(type_schema_def)s);
+""" % vars
+plpy.execute(sql_create_type)
+
+return True
+
+$BODY$
+LANGUAGE 'plpythonu' VOLATILE;
 
 
 -- HT_CreateHistory
@@ -94,7 +132,29 @@ sql_attime_funct = """
 """ % vars
 plpy.execute(sql_attime_funct)
 
+sql_create_difftype = "SELECT HT_Create_DiffType('%(dbschema)s', '%(dbtable)s');" % vars
+plpy.execute(sql_create_difftype)
 
+#DiffToTime function
+sql_difftotime_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(difftime timestamp)
+	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
+	$$
+	BEGIN
+		RETURN QUERY
+			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+			WHERE time_start > difftime AND time_end IS NULL)
+
+			UNION ALL
+
+			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
+			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+	END;
+	$$
+	LANGUAGE 'plpgsql';
+""" % vars
+plpy.execute(sql_difftotime_funct)
 
 #INSERT
 sql_insert_funct = """
@@ -243,11 +303,19 @@ sql_delete_funct = """
 """ % vars
 plpy.execute(sql_delete_funct)
 
-#ATTIME FUNCTION 
-sql_attime_funct = """
+#layer functions 
+sql_lay_funct = """
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp);
+	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(timestamp);
 """ % vars
-plpy.execute(sql_attime_funct)
+plpy.execute(sql_lay_funct)
+
+#types 
+sql_lay_funct = """
+	DROP TYPE %(dbschema)s.ht_%(dbtable)s_difftype;
+""" % vars
+plpy.execute(sql_lay_funct)
+
 
 #HISTORY TAB
 sql_history_tab = """
