@@ -2,20 +2,22 @@
 -- add changes_count column to hist_tracker.tags
 -- ht_log
 -- ht_count_changes
--- ht_diff
+-- ht_difftotime
+-- ht_difftotag
 
 -- CREATE SCHEMA
 CREATE SCHEMA hist_tracker;
 
 -- CREATE TABLES
 CREATE TABLE hist_tracker.tags (
-	id_commit serial PRIMARY KEY,
+	id serial PRIMARY KEY,
 	dbschema character varying,
 	dbtable character varying,
 	dbuser character varying,
-	time_commit timestamp,
+	time_tag timestamp,
 	message character varying
 );
+
 
 -- HT_GetTableFields
 CREATE OR REPLACE FUNCTION HT_GetTableFields(dbschema text, dbtable text)
@@ -94,6 +96,7 @@ dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
 
+
 #HISTORY TAB
 sql_history_tab = """
 	CREATE TABLE hist_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
@@ -119,6 +122,9 @@ sql_history_tab2 = """
 plpy.execute(sql_history_tab2)
 
 
+plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message) \
+	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.')" % vars)
+
 
 #ATTIME FUNCTION 
 sql_attime_funct = """
@@ -141,15 +147,20 @@ sql_difftotime_funct = """
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
 	$$
 	BEGIN
-		RETURN QUERY
-			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
-			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-			WHERE time_start > difftime AND time_end IS NULL)
+		IF difftime > (SELECT MIN(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
+			RETURN QUERY
+				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start > difftime AND time_end IS NULL)
 
-			UNION ALL
+				UNION ALL
 
-			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
-			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
+				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+		ELSE
+			RAISE WARNING 'Can not diff to time before history was created.';
+			RETURN;
+		END IF;
 	END;
 	$$
 	LANGUAGE 'plpgsql';
@@ -348,13 +359,13 @@ table_exists = plpy.execute(sql_table_exists)
 
 if table_exists[0]['count'] == 1:
 	sql_table_changed = """SELECT COUNT(*) AS count FROM hist_tracker.%(dbschema)s__%(dbtable)s 
-		WHERE time_start > (SELECT MAX(time_commit) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') OR 
-			(time_end > (SELECT MAX(time_commit) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s'));
+		WHERE time_start > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') OR 
+			(time_end > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s'));
 	""" % vars
 	table_changed = plpy.execute(sql_table_changed)
 	
 	if table_changed[0]['count'] > 0:
-		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_commit, message) \
+		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message) \
 			VALUES ('%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(message)s');" % vars)
 		plpy.info('I: Tag created for %s changes.' % table_changed[0]['count'])
 		return True
