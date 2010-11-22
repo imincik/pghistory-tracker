@@ -1,7 +1,5 @@
 --TODO:
--- add changes_count column to hist_tracker.tags
 -- ht_log
--- ht_count_changes
 -- ht_difftotime
 -- ht_difftotag
 
@@ -15,6 +13,7 @@ CREATE TABLE hist_tracker.tags (
 	dbtable character varying,
 	dbuser character varying,
 	time_tag timestamp,
+	changes_count integer,
 	message character varying
 );
 
@@ -122,8 +121,8 @@ sql_history_tab2 = """
 plpy.execute(sql_history_tab2)
 
 
-plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message) \
-	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.')" % vars)
+plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message, changes_count) \
+	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
 
 
 #ATTIME FUNCTION 
@@ -348,7 +347,11 @@ $BODY$
 dbschema = args[0]
 dbtable = args[1]
 message = args[2]
-vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message} 
+
+pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage \
+	WHERE table_schema = '%s' AND table_name = '%s'" % (dbschema, dbtable))[0]['column_name']
+
+vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
 
 sql_table_exists = """
 SELECT COUNT(*) AS count FROM information_schema.tables
@@ -357,17 +360,29 @@ SELECT COUNT(*) AS count FROM information_schema.tables
 """ % vars
 table_exists = plpy.execute(sql_table_exists)
 
+time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
+vars['time_last_tag'] = time_last_tag[0]['time_last_tag']
+
 if table_exists[0]['count'] == 1:
-	sql_table_changed = """SELECT COUNT(*) AS count FROM hist_tracker.%(dbschema)s__%(dbtable)s 
-		WHERE time_start > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') OR 
-			(time_end > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s'));
+	sql_changes_count = """SELECT COUNT(*) AS count FROM (
+				SELECT * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start > '%(time_last_tag)s' AND time_end IS NULL)
+
+				UNION ALL
+
+				SELECT * FROM %(dbschema)s.%(dbtable)s_AtTime('%(time_last_tag)s') WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s)
+
+				) AS foo;
 	""" % vars
-	table_changed = plpy.execute(sql_table_changed)
+	changes_count = plpy.execute(sql_changes_count)
 	
-	if table_changed[0]['count'] > 0:
-		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message) \
-			VALUES ('%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(message)s');" % vars)
-		plpy.info('I: Tag created for %s changes.' % table_changed[0]['count'])
+	vars['changes_count'] = changes_count[0]['count']
+	if vars['changes_count'] > 0:
+		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, changes_count, message) \
+			VALUES ('%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(changes_count)s', '%(message)s');" % vars)
+		plpy.info('I: Tag created for %(changes_count)s changes.' % vars)
 		return True
 	else:
 		plpy.warning('W: Nothing changed since last tag.')
