@@ -1,6 +1,15 @@
 -- CREATE SCHEMA
 CREATE SCHEMA hist_tracker;
 
+-- CREATE TABLES
+CREATE TABLE hist_tracker.tags (
+	id_commit serial PRIMARY KEY,
+	dbschema character varying,
+	dbtable character varying,
+	dbuser character varying,
+	time_commit timestamp,
+	message character varying
+);
 
 -- HT_GetTableFields
 CREATE OR REPLACE FUNCTION HT_GetTableFields(dbschema text, dbtable text)
@@ -250,5 +259,47 @@ return 1
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+
+
+-- HT_Tag
+CREATE OR REPLACE FUNCTION HT_Tag(dbschema text, dbtable text, message text)
+	RETURNS boolean AS
+$BODY$
+
+dbschema = args[0]
+dbtable = args[1]
+message = args[2]
+vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message} 
+
+sql_table_exists = """
+SELECT COUNT(*) AS count FROM information_schema.tables
+	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
+	table_type = 'BASE TABLE';
+""" % vars
+table_exists = plpy.execute(sql_table_exists)
+
+if table_exists[0]['count'] == 1:
+	sql_table_changed = """SELECT COUNT(*) AS count FROM hist_tracker.%(dbschema)s__%(dbtable)s 
+		WHERE time_start > (SELECT MAX(time_commit) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') OR 
+			(time_end > (SELECT MAX(time_commit) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s'));
+	""" % vars
+	table_changed = plpy.execute(sql_table_changed)
+	
+	if table_changed[0]['count'] > 0:
+		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_commit, message) \
+			VALUES ('%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(message)s');" % vars)
+		plpy.info('I: Tag created for %s changes.' % table_changed[0]['count'])
+		return True
+	else:
+		plpy.warning('W: Nothing changed since last tag.')
+		return False
+else:
+	plpy.warning('W: Table does not exists.')
+	return False
+
+$BODY$
+LANGUAGE 'plpythonu' VOLATILE;
+
+
 
 -- # vim: set syntax=python ts=8 sts=8 sw=8 noet: 
