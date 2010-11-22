@@ -188,11 +188,11 @@ sql_insert_funct = """
 	RETURNS trigger AS
 	$$
 	BEGIN
-  	if NEW.time_start IS NULL then
-    		NEW.time_start = now();
-    		NEW.time_end = null;
+	IF NEW.time_start IS NULL THEN
+		NEW.time_start = now();
+		NEW.time_end = null;
 		NEW.dbuser = current_user;
-  	end if;
+	END IF;
   	RETURN NEW;
 	END;
 	$$
