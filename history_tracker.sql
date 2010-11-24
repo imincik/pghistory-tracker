@@ -280,7 +280,8 @@ sql_delete_funct = """
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 """ % vars
 plpy.execute(sql_delete_funct)
-return 1
+
+return True
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
@@ -349,7 +350,7 @@ sql_history_tab = """
 """ % vars
 plpy.execute(sql_history_tab)
 
-return 1
+return True
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
