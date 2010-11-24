@@ -340,6 +340,8 @@ sql_lay_funct = """
 """ % vars
 plpy.execute(sql_lay_funct)
 
+#hist_tracker.tags
+plpy.execute("DELETE FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
 
 #HISTORY TAB
 sql_history_tab = """
