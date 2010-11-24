@@ -1,3 +1,5 @@
+SET client_min_messages = warning;
+
 -- Helper table for test variables
 CREATE TABLE public.test_variables
 (
