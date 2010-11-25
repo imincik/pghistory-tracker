@@ -13,6 +13,7 @@ SELECT * FROM gisdata.t_data ORDER BY id;
 
 SELECT * FROM gisdata.t_data_AtTime((SELECT MAX(val)::timestamp FROM public.test_variables WHERE prop = 't_data__edit')) ORDER by id;
 
+SELECT HT_Tag('gisdata', 't_data', 't_data test edit.')
 
 
 -- v_layer
@@ -30,3 +31,5 @@ SELECT * FROM gis.v_layer ORDER BY gid;
 
 SELECT * FROM gis.v_layer_AtTime((SELECT MAX(val)::timestamp FROM public.test_variables WHERE prop = 'v_layer__edit')) ORDER BY gid;
 
+
+SELECT HT_Tag('gis', 'v_layer', 'v_layer test edit.')
