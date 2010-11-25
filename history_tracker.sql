@@ -54,7 +54,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 -- HT_Create_DiffType
 CREATE OR REPLACE FUNCTION HT_Create_DiffType(dbschema text, dbtable text)
-	RETURNS text AS
+	RETURNS boolean AS
 $BODY$
 
 dbschema = args[0]
@@ -91,7 +91,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 -- HT_CreateHistory
 CREATE OR REPLACE FUNCTION HT_CreateHistory(dbschema text, dbtable text)
-	RETURNS integer AS
+	RETURNS boolean AS
 $BODY$
 
 from datetime import datetime
@@ -105,7 +105,6 @@ pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage
 dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
-
 
 #HISTORY TAB
 sql_history_tab = """
@@ -291,7 +290,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 -- HT_RemoveHistory
 CREATE OR REPLACE FUNCTION HT_RemoveHistory(dbschema text, dbtable text)
-	RETURNS integer AS
+	RETURNS boolean AS
 $BODY$
 
 dbschema = args[0]
