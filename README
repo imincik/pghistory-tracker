@@ -28,7 +28,7 @@ Preparing database:
 
 
 USAGE
-1. Adding versioning support to table: 'SELECT HT_CreateHistory('<schema>', '<table>');'
+1. Adding versioning support to table: 'SELECT HT_Init('<schema>', '<table>');'
 2. Retrieving table state in particulal time: 'SELECT * FROM <schema>.<table>_AtTime('<timestamp>');'
 
 

@@ -88,8 +88,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_CreateHistory
-CREATE OR REPLACE FUNCTION HT_CreateHistory(dbschema text, dbtable text)
+-- HT_Init
+CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
@@ -287,8 +287,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_RemoveHistory
-CREATE OR REPLACE FUNCTION HT_RemoveHistory(dbschema text, dbtable text)
+-- HT_Drop
+CREATE OR REPLACE FUNCTION HT_Drop(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
