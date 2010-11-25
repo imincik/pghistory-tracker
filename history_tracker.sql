@@ -1,7 +1,3 @@
---TODO:
--- ht_difftotime
--- ht_difftotag
-
 -- CREATE SCHEMA
 CREATE SCHEMA hist_tracker;
 
@@ -11,6 +7,7 @@ CREATE SCHEMA hist_tracker;
 -- CREATE TABLES
 CREATE TABLE hist_tracker.tags (
 	id serial PRIMARY KEY,
+	id_tag integer,
 	dbschema character varying,
 	dbtable character varying,
 	dbuser character varying,
@@ -130,8 +127,8 @@ sql_history_tab2 = """
 """ % vars
 plpy.execute(sql_history_tab2)
 
-plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, message, changes_count) \
-	VALUES ('%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
+plpy.execute("INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, message, changes_count) \
+	VALUES (1, '%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
 
 
 #AtTime function 
@@ -150,13 +147,38 @@ sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');"
 plpy.execute(sql_create_difftype)
 
 
+#Diff function
+sql_difftotime_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff()
+	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
+	$$
+	DECLARE
+		difftime timestamp;
+	BEGIN
+		difftime := (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
+		RETURN QUERY
+			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+			WHERE time_start > difftime AND time_end IS NULL)
+
+			UNION ALL
+
+			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
+			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+	END;
+	$$
+	LANGUAGE 'plpgsql';
+""" % vars
+plpy.execute(sql_difftotime_funct)
+
+
 #DiffToTime function
 sql_difftotime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(difftime timestamp)
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
 	$$
 	BEGIN
-		IF difftime > (SELECT MIN(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
+		IF difftime >= (SELECT MIN(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
 			RETURN QUERY
 				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
 				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
@@ -175,6 +197,57 @@ sql_difftotime_funct = """
 	LANGUAGE 'plpgsql';
 """ % vars
 plpy.execute(sql_difftotime_funct)
+
+
+#DiffToTag function
+sql_difftotime_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_DiffToTag(difftag integer)
+	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
+	$$
+	DECLARE
+		difftime timestamp;
+	BEGIN
+		IF difftag <= (SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
+			difftime := (SELECT time_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s' AND id_tag = difftag);
+			RETURN QUERY
+				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start > difftime AND time_end IS NULL)
+
+				UNION ALL
+
+				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
+				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+		ELSE
+			RAISE WARNING 'Tag does not exists.';
+			RETURN;
+		END IF;
+	END;
+	$$
+	LANGUAGE 'plpgsql';
+""" % vars
+plpy.execute(sql_difftotime_funct)
+
+
+#Diff view
+#this view is providing same content as Diff function. It is created because some softwares
+#has problems to load views where primary key is derived from function (QGIS).
+sql_diff_view = """
+	CREATE OR REPLACE VIEW %(dbschema)s.%(dbtable)s_htdiff AS
+
+		SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') 
+					AND time_end IS NULL)
+
+		UNION ALL
+
+		SELECT '-'::character(1) AS operation, * 
+			FROM %(dbschema)s.%(dbtable)s_AtTime((SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s')) 
+				WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+""" % vars
+plpy.execute(sql_diff_view)
 
 
 #INSERT
@@ -326,10 +399,18 @@ sql_delete_funct = """
 """ % vars
 plpy.execute(sql_delete_funct)
 
+#views
+sql_views = """
+	DROP VIEW %(dbschema)s.%(dbtable)s_htdiff;
+""" % vars
+plpy.execute(sql_views)
+
 #layer functions 
 sql_lay_funct = """
+	DROP FUNCTION %(dbschema)s.%(dbtable)s_Diff();
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp);
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(timestamp);
+	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTag(integer);
 """ % vars
 plpy.execute(sql_lay_funct)
 
@@ -398,8 +479,9 @@ if table_exists[0]['count'] == 1:
 	
 	vars['changes_count'] = changes_count[0]['count']
 	if vars['changes_count'] > 0:
-		plpy.execute("INSERT INTO hist_tracker.tags (dbschema, dbtable, dbuser, time_tag, changes_count, message) \
-			VALUES ('%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(changes_count)s', '%(message)s');" % vars)
+		plpy.execute("INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message) \
+			VALUES ((SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s')::integer + 1, \
+				'%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(changes_count)s', '%(message)s');" % vars)
 		plpy.info('I: Tag created for %(changes_count)s changes.' % vars)
 		return True
 	else:
