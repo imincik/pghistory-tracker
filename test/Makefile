@@ -8,8 +8,9 @@ test-init-db:
 	createdb history_tracker_test
 	createlang plpgsql history_tracker_test
 	createlang plpythonu history_tracker_test
-	find /usr/share/postgresql-* -iname 'lwpostgis.sql' -exec psql -q history_tracker_test -f "{}" \;
-	find /usr/share/postgresql-* -iname 'spatial_ref_sys.sql' -exec psql -q history_tracker_test -f "{}" \;
+	find /usr/share/postgresql* -iname 'lwpostgis.sql' -exec psql -q history_tracker_test -f "{}" \;
+	find /usr/share/postgresql* -iname 'postgis.sql' -exec psql -q history_tracker_test -f "{}" \;
+	find /usr/share/postgresql* -iname 'spatial_ref_sys.sql' -exec psql -q history_tracker_test -f "{}" \;
 	psql -q history_tracker_test -f create_tables.sql
 	psql -q --set VERBOSITY=terse history_tracker_test -f ../history_tracker.sql
 	
