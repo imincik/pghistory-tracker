@@ -51,8 +51,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_Create_DiffType
-CREATE OR REPLACE FUNCTION HT_Create_DiffType(dbschema text, dbtable text)
+-- HT_CreateDiffType
+CREATE OR REPLACE FUNCTION HT_CreateDiffType(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
@@ -146,7 +146,7 @@ sql_attime_funct = """
 """ % vars
 plpy.execute(sql_attime_funct)
 
-sql_create_difftype = "SELECT HT_Create_DiffType('%(dbschema)s', '%(dbtable)s');" % vars
+sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
 plpy.execute(sql_create_difftype)
 
 
