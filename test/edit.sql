@@ -3,10 +3,12 @@ INSERT INTO public.test_variables (prop, val) VALUES ('t_data__edit', current_ti
 
 SELECT * FROM gisdata.t_data ORDER BY id;
 
-DELETE FROM gisdata.t_data WHERE fff = 'xxx';
+INSERT INTO gisdata.t_data (fff) VALUES (current_timestamp::text);
+
+DELETE FROM gisdata.t_data WHERE id = (SELECT MIN(id) FROM gisdata.t_data);
 SELECT * FROM hist_tracker.gisdata__t_data;
 
-UPDATE gisdata.t_data SET eee = '100000' WHERE eee = 200;
+UPDATE gisdata.t_data SET fff = current_timestamp::text WHERE id = (SELECT MIN(id) FROM gisdata.t_data);
 SELECT * FROM hist_tracker.gisdata__t_data;
 
 SELECT * FROM gisdata.t_data ORDER BY id;
@@ -21,10 +23,12 @@ INSERT INTO public.test_variables (prop, val) VALUES ('v_layer__edit', current_t
 
 SELECT * FROM gis.v_layer ORDER BY gid;
 
-DELETE FROM gis.v_layer WHERE bbb = 'bbb';
+INSERT INTO gis.v_layer (bbb) VALUES (current_timestamp::text);
+
+DELETE FROM gis.v_layer WHERE gid = (SELECT MIN(gid) FROM gis.v_layer);
 SELECT * FROM hist_tracker.gis__v_layer;
 
-UPDATE gis.v_layer SET aaa = '100000' WHERE aaa = 111;
+UPDATE gis.v_layer SET bbb = current_timestamp::text WHERE gid = (SELECT MIN(gid) FROM gis.v_layer);
 SELECT * FROM hist_tracker.gis__v_layer;
 
 SELECT * FROM gis.v_layer ORDER BY gid;
