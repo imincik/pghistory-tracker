@@ -157,14 +157,29 @@ sql_difftotime_funct = """
 	BEGIN
 		difftime := (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
 		RETURN QUERY
-			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
-			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-			WHERE time_start > difftime AND time_end IS NULL)
+			SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+			WHERE %(pkey)s IN
+				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					WHERE time_start > difftime AND time_end IS NULL)
+			AND %(pkey)s IN
+				(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
+
+			UNION ALL
+			
+			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+			WHERE %(pkey)s IN
+				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					WHERE time_start > difftime AND time_end IS NULL)
+			AND %(pkey)s NOT IN
+				(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 			UNION ALL
 
-			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
-			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
+			WHERE %(pkey)s NOT IN
+				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
 	END;
 	$$
 	LANGUAGE 'plpgsql';
@@ -180,14 +195,29 @@ sql_difftotime_funct = """
 	BEGIN
 		IF difftime >= (SELECT MIN(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
 			RETURN QUERY
-				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
-				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start > difftime AND time_end IS NULL)
+				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+				WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start > difftime AND time_end IS NULL)
+				AND %(pkey)s IN
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
+
+				UNION ALL
+				
+				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+				WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start > difftime AND time_end IS NULL)
+				AND %(pkey)s NOT IN
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 				UNION ALL
 
-				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
-				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
+				WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
 		ELSE
 			RAISE WARNING 'Can not diff to time before history was created.';
 			RETURN;
@@ -210,14 +240,29 @@ sql_difftotime_funct = """
 		IF difftag <= (SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
 			difftime := (SELECT time_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s' AND id_tag = difftag);
 			RETURN QUERY
-				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
-				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start > difftime AND time_end IS NULL)
+				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+				WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start > difftime AND time_end IS NULL)
+				AND %(pkey)s IN
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
+
+				UNION ALL
+				
+				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+				WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start > difftime AND time_end IS NULL)
+				AND %(pkey)s NOT IN
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 				UNION ALL
 
-				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) WHERE %(pkey)s NOT IN
-				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
+				WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
 		ELSE
 			RAISE WARNING 'Tag does not exists.';
 			RETURN;
@@ -234,18 +279,29 @@ plpy.execute(sql_difftotime_funct)
 #has problems to load views where primary key is derived from function (QGIS).
 sql_diff_view = """
 	CREATE OR REPLACE VIEW %(dbschema)s.%(dbtable)s_htdiff AS
-
-		SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
+		SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+		WHERE %(pkey)s IN
 			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start > (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') 
-					AND time_end IS NULL)
+				WHERE time_start > difftime AND time_end IS NULL)
+		AND %(pkey)s IN
+			(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
+
+		UNION ALL
+		
+		SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
+		WHERE %(pkey)s IN
+			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start > difftime AND time_end IS NULL)
+		AND %(pkey)s NOT IN
+			(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+				WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 		UNION ALL
 
-		SELECT '-'::character(1) AS operation, * 
-			FROM %(dbschema)s.%(dbtable)s_AtTime((SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s')) 
-				WHERE %(pkey)s NOT IN
-					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+		SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
+		WHERE %(pkey)s NOT IN
+			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
 """ % vars
 plpy.execute(sql_diff_view)
 
