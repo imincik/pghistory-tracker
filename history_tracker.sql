@@ -147,49 +147,11 @@ sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');"
 plpy.execute(sql_create_difftype)
 
 
-#Diff function
-sql_difftotime_funct = """
-	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff()
-	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
-	$$
-	DECLARE
-		difftime timestamp;
-	BEGIN
-		difftime := (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
-		RETURN QUERY
-			SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-			WHERE %(pkey)s IN
-				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-					WHERE time_start > difftime AND time_end IS NULL)
-			AND %(pkey)s IN
-				(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-					WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-			UNION ALL
-			
-			SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-			WHERE %(pkey)s IN
-				(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-					WHERE time_start > difftime AND time_end IS NULL)
-			AND %(pkey)s NOT IN
-				(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-					WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-			UNION ALL
-
-			SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
-			WHERE %(pkey)s NOT IN
-				(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
-	END;
-	$$
-	LANGUAGE 'plpgsql';
-""" % vars
-plpy.execute(sql_difftotime_funct)
 
 
 #DiffToTime function
 sql_difftotime_funct = """
-	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(difftime timestamp)
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff(difftime timestamp)
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
 	$$
 	BEGIN
@@ -228,6 +190,25 @@ sql_difftotime_funct = """
 """ % vars
 plpy.execute(sql_difftotime_funct)
 
+#Diff function
+sql_difftotime_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff()
+	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
+	$$
+	DECLARE
+		difftime timestamp;
+		ret_row record;
+	BEGIN
+		difftime := (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
+		FOR ret_row IN SELECT * FROM %(dbschema)s.%(dbtable)s_Diff(difftime) LOOP
+			RETURN NEXT ret_row;
+		END LOOP;
+		RETURN;
+	END;
+	$$
+	LANGUAGE 'plpgsql';
+""" % vars
+plpy.execute(sql_difftotime_funct)
 
 #DiffToTag function
 sql_difftotime_funct = """
@@ -236,33 +217,15 @@ sql_difftotime_funct = """
 	$$
 	DECLARE
 		difftime timestamp;
+		ret_row record;
 	BEGIN
 		IF difftag <= (SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
 			difftime := (SELECT time_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s' AND id_tag = difftag);
-			RETURN QUERY
-				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-				WHERE %(pkey)s IN
-					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-						WHERE time_start > difftime AND time_end IS NULL)
-				AND %(pkey)s IN
-					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-				UNION ALL
-				
-				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-				WHERE %(pkey)s IN
-					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-						WHERE time_start > difftime AND time_end IS NULL)
-				AND %(pkey)s NOT IN
-					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-				UNION ALL
-
-				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
-				WHERE %(pkey)s NOT IN
-					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
+			FOR ret_row IN SELECT * FROM %(dbschema)s.%(dbtable)s_Diff(difftime) LOOP
+				RETURN NEXT ret_row;
+			END LOOP;
+			RETURN;
+	
 		ELSE
 			RAISE WARNING 'Tag does not exists.';
 			RETURN;
@@ -429,7 +392,7 @@ plpy.execute(sql_delete_funct)
 sql_lay_funct = """
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_Diff();
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp);
-	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTime(timestamp);
+	DROP FUNCTION %(dbschema)s.%(dbtable)s_Diff(timestamp);
 	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTag(integer);
 """ % vars
 plpy.execute(sql_lay_funct)
@@ -458,6 +421,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 -- HT_Tag
+-- TODO: rewrite to plpgsql
 CREATE OR REPLACE FUNCTION HT_Tag(dbschema text, dbtable text, message text)
 	RETURNS boolean AS
 $BODY$
