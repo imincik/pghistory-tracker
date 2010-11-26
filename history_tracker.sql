@@ -274,36 +274,6 @@ sql_difftotime_funct = """
 plpy.execute(sql_difftotime_funct)
 
 
-#Diff view
-#this view is providing same content as Diff function. It is created because some softwares
-#has problems to load views where primary key is derived from function (QGIS).
-sql_diff_view = """
-	CREATE OR REPLACE VIEW %(dbschema)s.%(dbtable)s_htdiff AS
-		SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-		WHERE %(pkey)s IN
-			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start > difftime AND time_end IS NULL)
-		AND %(pkey)s IN
-			(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-		UNION ALL
-		
-		SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
-		WHERE %(pkey)s IN
-			(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start > difftime AND time_end IS NULL)
-		AND %(pkey)s NOT IN
-			(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-				WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
-
-		UNION ALL
-
-		SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(difftime) 
-		WHERE %(pkey)s NOT IN
-			(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s);
-""" % vars
-plpy.execute(sql_diff_view)
 
 
 #INSERT
@@ -454,12 +424,6 @@ sql_delete_funct = """
 	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_delete();
 """ % vars
 plpy.execute(sql_delete_funct)
-
-#views
-sql_views = """
-	DROP VIEW %(dbschema)s.%(dbtable)s_htdiff;
-""" % vars
-plpy.execute(sql_views)
 
 #layer functions 
 sql_lay_funct = """
