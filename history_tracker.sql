@@ -261,6 +261,7 @@ sql_insert_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
+	DROP TRIGGER IF EXISTS tg_%(dbtable)s_insert ON %(dbschema)s.%(dbtable)s;
 	CREATE TRIGGER tg_%(dbtable)s_insert BEFORE INSERT ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_insert();
 
@@ -280,6 +281,7 @@ sql_insert_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
+	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_insert ON hist_tracker.%(dbschema)s__%(dbtable)s;
 	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON hist_tracker.%(dbschema)s__%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
 	""" % vars
@@ -301,6 +303,7 @@ sql_update_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
+	DROP TRIGGER IF EXISTS tg_%(dbtable)s_update ON %(dbschema)s.%(dbtable)s;
 	CREATE TRIGGER tg_%(dbtable)s_update BEFORE UPDATE ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_update();
 
@@ -323,6 +326,7 @@ sql_update_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 	
+	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_update ON hist_tracker.%(dbschema)s__%(dbtable)s;
 	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON hist_tracker.%(dbschema)s__%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_update();
 """ % sql_update_vars
@@ -341,10 +345,11 @@ sql_delete_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
+	DROP TRIGGER IF EXISTS tg_%(dbtable)s_delete ON %(dbschema)s.%(dbtable)s;
 	CREATE TRIGGER tg_%(dbtable)s_delete BEFORE DELETE ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_delete();
 
-
+	DROP RULE IF EXISTS %(dbschema)s__%(dbtable)s_del ON hist_tracker.%(dbschema)s__%(dbtable)s;
 	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO hist_tracker.%(dbschema)s__%(dbtable)s
 	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
