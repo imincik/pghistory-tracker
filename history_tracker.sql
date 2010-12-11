@@ -48,6 +48,33 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
+-- HT_TableExists
+CREATE OR REPLACE FUNCTION HT_TableExists(dbschema text, dbtable text)
+	RETURNS boolean AS
+$BODY$
+
+dbschema = args[0]
+dbtable = args[1]
+vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+
+sql_table_exists = """
+	SELECT COUNT(*) AS count FROM information_schema.tables
+		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
+		table_type = 'BASE TABLE';
+""" % vars
+table_exists = plpy.execute(sql_table_exists)
+
+if table_exists[0]['count'] > 0:
+	return True
+else:
+	return False
+
+$BODY$
+LANGUAGE 'plpythonu' VOLATILE;
+
+
+
+
 -- HT_CreateDiffType
 CREATE OR REPLACE FUNCTION HT_CreateDiffType(dbschema text, dbtable text)
 	RETURNS boolean AS
@@ -120,15 +147,21 @@ sql_history_tab = """
 	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 
 		'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
-plpy.execute(sql_history_tab)
+
 
 sql_history_tab2 = """
 	UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_start = now();
+	
+	INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, message, changes_count)
+		VALUES (1, '%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0);
 """ % vars
-plpy.execute(sql_history_tab2)
 
-plpy.execute("INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, message, changes_count) \
-	VALUES (1, '%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0)" % vars)
+sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
+
+if plpy.execute("SELECT HT_TableExists('hist_tracker', '%(dbschema)s__%(dbtable)s')" % vars)[0]['ht_tableexists'] is False:
+	plpy.execute(sql_history_tab)
+	plpy.execute(sql_history_tab2)
+	plpy.execute(sql_create_difftype)
 
 
 #AtTime function 
@@ -143,8 +176,6 @@ sql_attime_funct = """
 """ % vars
 plpy.execute(sql_attime_funct)
 
-sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
-plpy.execute(sql_create_difftype)
 
 
 
@@ -435,18 +466,11 @@ pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
 
-sql_table_exists = """
-	SELECT COUNT(*) AS count FROM information_schema.tables
-		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
-		table_type = 'BASE TABLE';
-""" % vars
-table_exists = plpy.execute(sql_table_exists)
-
 time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tracker.tags WHERE \
 	dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
 vars['time_last_tag'] = time_last_tag[0]['time_last_tag']
 
-if table_exists[0]['count'] == 1:
+if plpy.execute("SELECT HT_TableExists('%(dbschema)s', '%(dbtable)s')" % vars)[0]['ht_tableexists'] is True:
 	sql_changes_count = """	SELECT COUNT(*) AS count FROM (
 				SELECT * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
 					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
