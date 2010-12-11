@@ -490,16 +490,16 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 --HT_Log
 CREATE OR REPLACE FUNCTION HT_Log(text, text)
-RETURNS SETOF hist_tracker.tags AS
+	RETURNS SETOF hist_tracker.tags AS
 $$
-SELECT * FROM hist_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
+	SELECT * FROM hist_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
 
 CREATE OR REPLACE FUNCTION HT_Log()
-RETURNS SETOF hist_tracker.tags AS
+	RETURNS SETOF hist_tracker.tags AS
 $$
-SELECT * FROM hist_tracker.tags ORDER BY id DESC;
+	SELECT * FROM hist_tracker.tags ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
 
