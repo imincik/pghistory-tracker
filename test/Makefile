@@ -12,6 +12,7 @@ test-init-db:
 	find /usr/share/postgresql* -iname 'postgis.sql' -exec psql -q history_tracker_test -f "{}" \;
 	find /usr/share/postgresql* -iname 'spatial_ref_sys.sql' -exec psql -q history_tracker_test -f "{}" \;
 	psql -q history_tracker_test -f create_tables.sql
+	psql -q --set VERBOSITY=terse history_tracker_test -f ../init_tracker.sql
 	psql -q --set VERBOSITY=terse history_tracker_test -f ../history_tracker.sql
 	
 test-init-history:
