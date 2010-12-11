@@ -26,6 +26,35 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
+-- HT_GetTablePkey
+CREATE OR REPLACE FUNCTION HT_GetTablePkey(dbschema text, dbtable text)
+	RETURNS text AS
+$BODY$
+
+dbschema = args[0]
+dbtable = args[1]
+vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+
+sql = """
+SELECT column_name FROM information_schema.key_column_usage
+	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
+""" % vars
+ret = plpy.execute(sql)
+
+if len(ret) == 1:
+	return ret[0]['column_name']
+elif len(ret) == 0:
+	plpy.error('E: Table does not exists.')
+else:
+	plpy.error('E: Tables with multiple-column primary key are not supported.')
+	return False
+
+$BODY$
+LANGUAGE 'plpythonu' VOLATILE;
+
+
+
+
 
 -- HT_TableExists
 CREATE OR REPLACE FUNCTION HT_TableExists(dbschema text, dbtable text)
@@ -102,8 +131,7 @@ dbschema = args[0]
 dbtable = args[1]
 dbuser = plpy.execute("SELECT current_user")[0]['current_user']
 table_fields = plpy.execute("SELECT HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
-pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage \
-	WHERE table_schema = '%s' AND table_name = '%s'" % (dbschema, dbtable))[0]['column_name']
+pkey = plpy.execute("SELECT HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
 dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
@@ -445,8 +473,7 @@ dbschema = args[0]
 dbtable = args[1]
 message = args[2]
 
-pkey = plpy.execute("SELECT column_name FROM information_schema.key_column_usage \
-	WHERE table_schema = '%s' AND table_name = '%s'" % (dbschema, dbtable))[0]['column_name']
+pkey = plpy.execute("SELECT HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
 
