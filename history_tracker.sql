@@ -506,4 +506,4 @@ LANGUAGE 'SQL';
 
 
 
--- # vim: set syntax=python ts=8 sts=8 sw=8 noet: 
+-- # vim: set syntax=python ts=4 sts=4 sw=4 noet: 

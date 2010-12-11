@@ -15,3 +15,8 @@ CREATE TABLE hist_tracker.tags (
 	changes_count integer,
 	message character varying
 );
+
+
+
+
+-- # vim: set syntax=python ts=4 sts=4 sw=4 noet: 
