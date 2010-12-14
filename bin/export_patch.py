@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-# TODO: solve NULL values.
 
 import sys
 import psycopg2
@@ -26,20 +25,30 @@ def _exec_sql(sql):
 	cur.execute(sql)
 	return cur
 
+def _quote_str(val, double_quotation = True):
+	if double_quotation == True:
+		q = '"'
+	else:
+		q = "'"
+	
+	if val == 'NULL':
+		return 'NULL'
+	else:
+		return '%s%s%s' % (q, val, q)
+
 def _delete_cmd(pkey_val):
 	print """DELETE FROM "%s"."%s" WHERE "%s" = '%s';""" % (dbschema, dbtable, pkey, pkey_val)
 
 def _update_cmd(fields, vals, val_pkey):
 	field_str = ", ".join('"%s"' % f for f in fields)
-	val_str = ", ".join("'%s'" % v for v in vals)
+	val_str = ", ".join("%s" % _quote_str(v, False) for v in vals)
 
-	# TODO: add WHERE pkey = val
-	print """UPDATE "%s"."%s" SET (%s) = (%s) WHERE "%s" = '%s';""" % (dbschema, dbtable, 
+	print """UPDATE "%s"."%s" SET (%s) = (%s) WHERE "%s" = %s;""" % (dbschema, dbtable, 
 			field_str, val_str, pkey, val_pkey)
 
 def _insert_cmd(fields, vals):
 	field_str = ", ".join('"%s"' % f for f in fields)
-	val_str = ", ".join("'%s'" % v for v in vals)
+	val_str = ", ".join("%s" % _quote_str(v, False) for v in vals)
 
 	print """INSERT INTO "%s"."%s" (%s) VALUES (%s);""" % (dbschema, dbtable, field_str, val_str)
 
@@ -47,7 +56,7 @@ def _insert_cmd(fields, vals):
 if __name__ == "__main__":
 	
 	# test if table exists
-	if _exec_sql('SELECT %s.%s_Diff() LIMIT 1' % (dbschema, dbtable)).fetchone():
+	if _exec_sql('SELECT * FROM %s.%s_Diff() LIMIT 1' % (dbschema, dbtable)).fetchone():
 		print "W: Unclosed changes in table. Run 'HT_Tag', then try again."
 		sys.exit(1)
 
@@ -91,7 +100,7 @@ if __name__ == "__main__":
 	diff_insert = _exec_sql("SELECT * FROM %s.%s_DiffToTag(%s) \
 			WHERE operation = '+'" % (dbschema, dbtable, tag)).fetchall()
 	
-	print '\n--INSERT'
+	print '\n-- INSERT'
 	for diff_row in diff_insert:
 		vals = []
 		for field in fields:
