@@ -61,7 +61,7 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	#get table primary key
-	pkey = _exec_sql("SELECT HT_GetTablePkey('%s', '%s') AS pkey \
+	pkey = _exec_sql("SELECT _HT_GetTablePkey('%s', '%s') AS pkey \
 			LIMIT 1" % (dbschema, dbtable)).fetchone()['pkey']
 
 	#get table fields

@@ -1,5 +1,5 @@
--- HT_GetTableFields
-CREATE OR REPLACE FUNCTION HT_GetTableFields(dbschema text, dbtable text)
+-- _HT_GetTableFields
+CREATE OR REPLACE FUNCTION _HT_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
 
@@ -26,8 +26,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_GetTablePkey
-CREATE OR REPLACE FUNCTION HT_GetTablePkey(dbschema text, dbtable text)
+-- _HT_GetTablePkey
+CREATE OR REPLACE FUNCTION _HT_GetTablePkey(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
 
@@ -56,8 +56,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_TableExists
-CREATE OR REPLACE FUNCTION HT_TableExists(dbschema text, dbtable text)
+-- _HT_TableExists
+CREATE OR REPLACE FUNCTION _HT_TableExists(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
@@ -83,8 +83,8 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_CreateDiffType
-CREATE OR REPLACE FUNCTION HT_CreateDiffType(dbschema text, dbtable text)
+-- _HT_CreateDiffType
+CREATE OR REPLACE FUNCTION _HT_CreateDiffType(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
@@ -130,8 +130,8 @@ from datetime import datetime
 dbschema = args[0]
 dbtable = args[1]
 dbuser = plpy.execute("SELECT current_user")[0]['current_user']
-table_fields = plpy.execute("SELECT HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
-pkey = plpy.execute("SELECT HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
+table_fields = plpy.execute("SELECT _HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
+pkey = plpy.execute("SELECT _HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
 dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
@@ -163,9 +163,9 @@ sql_history_tab2 = """
 		VALUES (1, '%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0);
 """ % vars
 
-sql_create_difftype = "SELECT HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
+sql_create_difftype = "SELECT _HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
 
-if plpy.execute("SELECT HT_TableExists('hist_tracker', '%(dbschema)s__%(dbtable)s')" % vars)[0]['ht_tableexists'] is False:
+if plpy.execute("SELECT _HT_TableExists('hist_tracker', '%(dbschema)s__%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is False:
 	plpy.execute(sql_history_tab)
 	plpy.execute(sql_history_tab2)
 	plpy.execute(sql_create_difftype)
@@ -473,7 +473,7 @@ dbschema = args[0]
 dbtable = args[1]
 message = args[2]
 
-pkey = plpy.execute("SELECT HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
+pkey = plpy.execute("SELECT _HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
 
@@ -481,7 +481,7 @@ time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tr
 	dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
 vars['time_last_tag'] = time_last_tag[0]['time_last_tag']
 
-if plpy.execute("SELECT HT_TableExists('%(dbschema)s', '%(dbtable)s')" % vars)[0]['ht_tableexists'] is True:
+if plpy.execute("SELECT _HT_TableExists('%(dbschema)s', '%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is True:
 	sql_changes_count = """	SELECT COUNT(*) AS count FROM (
 				SELECT * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
 					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
