@@ -25,8 +25,8 @@ def _exec_sql(sql):
 	cur.execute(sql)
 	return cur
 
-def _quote_str(val, double_quotation = True):
-	if double_quotation == True:
+def _quote_str(val, quotation = 2):
+	if quotation == 2:
 		q = '"'
 	else:
 		q = "'"
@@ -41,14 +41,14 @@ def _delete_cmd(pkey_val):
 
 def _update_cmd(fields, vals, val_pkey):
 	field_str = ", ".join('"%s"' % f for f in fields)
-	val_str = ", ".join("%s" % _quote_str(v, False) for v in vals)
+	val_str = ", ".join("%s" % _quote_str(v, 1) for v in vals)
 
 	print """UPDATE "%s"."%s" SET (%s) = (%s) WHERE "%s" = %s;""" % (dbschema, dbtable, 
 			field_str, val_str, pkey, val_pkey)
 
 def _insert_cmd(fields, vals):
 	field_str = ", ".join('"%s"' % f for f in fields)
-	val_str = ", ".join("%s" % _quote_str(v, False) for v in vals)
+	val_str = ", ".join("%s" % _quote_str(v, 1) for v in vals)
 
 	print """INSERT INTO "%s"."%s" (%s) VALUES (%s);""" % (dbschema, dbtable, field_str, val_str)
 
