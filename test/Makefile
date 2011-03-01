@@ -1,11 +1,12 @@
 
-test:	test-init-db test-init-history test-init-edit test-edit-insert test-edit-delete test-edit-update test-edit-finish test-patch test-clean-history test-init-history
+test:	test-init-db test-init-history test-init-edit test-edit-insert test-edit-delete test-edit-update test-edit-finish test-patch test-init-history
 
-clean:	test-clean-db
+clean:	test-clean-history test-clean-db
 
 
 test-init-db: 
 	createdb history_tracker_test
+	createdb history_tracker_test2
 	createlang plpgsql history_tracker_test
 	createlang plpythonu history_tracker_test
 	find /usr/share/postgresql* -iname 'lwpostgis.sql' -exec psql -q history_tracker_test -f "{}" \;
@@ -27,6 +28,8 @@ test-init-history:
 	psql -q history_tracker_test -c "SELECT * FROM test_gis__v_layer();" | ./runtest.sh -r init-history-v_layer.out
 	
 	psql -q history_tracker_test -c "SELECT * FROM test_tags();" | ./runtest.sh -r init-history-ht_log.out
+
+	pg_dump history_tracker_test | psql -q --set VERBOSITY=terse history_tracker_test2 -o /dev/null
 
 test-init-edit:
 	psql -q --set VERBOSITY=terse history_tracker_test -c "INSERT INTO public.test_variables (prop, val) VALUES ('t_data__edit', current_timestamp);"
@@ -80,11 +83,16 @@ test-edit-finish:
 		public.test_variables WHERE prop = 'v_layer__edit')) ORDER BY gid;" | ./runtest.sh -r edit-finish-v_layer_attime.out
 
 test-patch:
-	echo "TODO: test-patch"
+	../bin/export_patch.py "dbname=history_tracker_test" gisdata t_data 1 | psql -q history_tracker_test2
+	../bin/export_patch.py "dbname=history_tracker_test" gis v_layer 1 | psql -q history_tracker_test2
+	psql -q history_tracker_test2 -c "SELECT * FROM gisdata.t_data;" | ./runtest.sh -r patch-t_data.out
+	psql -q history_tracker_test2 -c "SELECT * FROM gis.v_layer;" | ./runtest.sh -r patch-v_layer.out
 
-test-clean-db:
-	dropdb history_tracker_test
 
 test-clean-history:
 	psql -q history_tracker_test -c "SELECT HT_Drop('gisdata', 't_data');" -o /dev/null
 	psql -q history_tracker_test -c "SELECT HT_Drop('gis', 'v_layer');" -o /dev/null
+
+test-clean-db:
+	dropdb history_tracker_test
+	dropdb history_tracker_test2

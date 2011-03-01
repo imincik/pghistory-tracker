@@ -36,6 +36,11 @@ def _quote_str(val, quotation = 2):
 	else:
 		return '%s%s%s' % (q, val, q)
 
+def _insert_tag(t):
+	print """INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
+			VALUES (%s, '%s', '%s', '%s', '%s', %s, '%s');""" % (t['id_tag'], t['dbschema'], t['dbtable'], \
+					t['dbuser'], t['time_tag'], t['changes_count'], t['message'])
+
 def _delete_cmd(pkey_val):
 	print """DELETE FROM "%s"."%s" WHERE "%s" = '%s';""" % (dbschema, dbtable, pkey, pkey_val)
 
@@ -71,6 +76,14 @@ if __name__ == "__main__":
 	#start transaction
 	print 'BEGIN;'
 	
+	#hist_tracker.tags
+	hist_tags = _exec_sql("SELECT * FROM hist_tracker.tags WHERE dbschema = '%s' AND \
+		dbtable = '%s' AND id_tag > '%s';" % (dbschema, dbtable, tag)).fetchall()
+	
+	print '\n-- INSERT TAGS'
+	for hist_tag in hist_tags:
+		_insert_tag(hist_tag)
+
 	#DELETE
 	diff_delete = _exec_sql("SELECT * FROM %s.%s_DiffToTag(%s) \
 			WHERE operation = '-'" % (dbschema, dbtable, tag)).fetchall()
