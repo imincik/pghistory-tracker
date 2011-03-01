@@ -8,9 +8,9 @@ RESTORE='\033[0m'
 #diff - $1
 if [ "$1" = "-r" ]; then
 	if `diff - $2 >/dev/null` ; then
-		echo -e "$GREEN \t * TEST PASSED $RESTORE"
+		echo -e "$GREEN * TEST PASSED $RESTORE"
 	else
-		echo -e "$RED *\t TEST FAILED $RESTORE"
+		echo -e "$RED * TEST FAILED $RESTORE"
 	fi
 else
 	cat /dev/stdin > $2
