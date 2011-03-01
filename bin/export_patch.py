@@ -76,7 +76,7 @@ if __name__ == "__main__":
 	#start transaction
 	print 'BEGIN;'
 	
-	#hist_tracker.tags
+	#HIST_TRACKER.TAGS
 	hist_tags = _exec_sql("SELECT * FROM hist_tracker.tags WHERE dbschema = '%s' AND \
 		dbtable = '%s' AND id_tag > '%s';" % (dbschema, dbtable, tag)).fetchall()
 	
