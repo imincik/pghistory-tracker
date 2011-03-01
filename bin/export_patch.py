@@ -55,7 +55,7 @@ def _insert_cmd(fields, vals):
 
 if __name__ == "__main__":
 	
-	# test if table exists
+	# test if all changes closed in tag
 	if _exec_sql('SELECT * FROM %s.%s_Diff() LIMIT 1' % (dbschema, dbtable)).fetchone():
 		print "W: Unclosed changes in table. Run 'HT_Tag', then try again."
 		sys.exit(1)

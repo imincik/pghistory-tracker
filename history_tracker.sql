@@ -499,7 +499,7 @@ if plpy.execute("SELECT _HT_TableExists('%(dbschema)s', '%(dbtable)s') AS tablee
 	vars['changes_count'] = changes_count[0]['count']
 	if vars['changes_count'] > 0:
 		plpy.execute("INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message) \
-			VALUES ((SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s')::integer + 1, \
+			VALUES (_HT_NextTagValue('%(dbschema)s', '%(dbtable)s'), \
 				'%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(changes_count)s', '%(message)s');" % vars)
 		plpy.info('I: Tag created for %(changes_count)s changes.' % vars)
 		return True
