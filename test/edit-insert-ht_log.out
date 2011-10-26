@@ -1,8 +1,0 @@
- id | id_tag | dbschema | dbtable | dbuser | changes_count |     message     
-----+--------+----------+---------+--------+---------------+-----------------
-  1 |      1 | gisdata  | t_data  | ivo    |             0 | History init.
-  2 |      1 | gis      | v_layer | ivo    |             0 | History init.
-  3 |      2 | gisdata  | t_data  | ivo    |             1 | t_data insert.
-  4 |      2 | gis      | v_layer | ivo    |             1 | v_layer insert.
-(4 rows)
-

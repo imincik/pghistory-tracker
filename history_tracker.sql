@@ -1,4 +1,6 @@
 -- _HT_GetTableFields
+-- TODO: return array
+-- TODO: crashing if table does not exists
 CREATE OR REPLACE FUNCTION _HT_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
@@ -44,10 +46,9 @@ ret = plpy.execute(sql)
 if len(ret) == 1:
 	return ret[0]['column_name']
 elif len(ret) == 0:
-	plpy.error('E: Table does not exists.')
+	return
 else:
-	plpy.error('E: Tables with multiple-column primary key are not supported.')
-	return False
+	return
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
