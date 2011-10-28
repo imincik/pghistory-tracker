@@ -169,8 +169,8 @@ BEGIN;
 	);
 	-- TODO: test updating all time_start values to now()
 	SELECT results_eq(
-		'SELECT id_tag, dbschema, dbtable, message, changes_count FROM hist_tracker.tags',
-		$$ VALUES (1, 'myschema', 'mytable', 'History init.', 0) $$,
+		'SELECT id_tag, dbschema::text, dbtable::text, message::text, changes_count FROM hist_tracker.tags',
+		'VALUES (1, ''myschema'', ''mytable'', ''History init.'', 0)',
 		'   => Check initial tag values.'
 	);
 	SELECT has_type(
