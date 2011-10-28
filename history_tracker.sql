@@ -189,7 +189,7 @@ plpy.execute(sql_attime_funct)
 
 
 
-#DiffToTime function
+#Diff(timestamp) function
 sql_difftotime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff(difftime timestamp)
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
@@ -230,7 +230,7 @@ sql_difftotime_funct = """
 """ % vars
 plpy.execute(sql_difftotime_funct)
 
-#Diff function
+#Diff() function
 sql_difftotime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff()
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
