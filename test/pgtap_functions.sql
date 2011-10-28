@@ -18,6 +18,8 @@
 BEGIN;
 	\i ../init_tracker.sql
 	\i ../history_tracker.sql
+	
+	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
 	SELECT plan(10);
@@ -29,7 +31,7 @@ BEGIN;
 		ARRAY['text', 'text'],
 		'*** _ht_gettablefields ***'
 	);
-	SELECT is(_ht_gettablefields('myschema', 'mytable'), 'id,aaa,bbb,ccc', '  => Testing return from existing table');
+	SELECT is(_ht_gettablefields('myschema', 'mytable'), 'id,aaa,bbb', '  => Testing return from existing table');
 	--SELECT is(_ht_gettablefields('myschema', 'none'), NULL, 'Testing return from non existing table');
 
 	-- _ht_gettablepkey
@@ -74,6 +76,8 @@ ROLLBACK;
 BEGIN;
 	\i ../init_tracker.sql
 	\i ../history_tracker.sql
+	
+	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
 	SELECT plan(3);
@@ -100,6 +104,8 @@ ROLLBACK;
 BEGIN;
 	\i ../init_tracker.sql
 	\i ../history_tracker.sql
+	
+	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
 	SELECT plan(3);
@@ -240,6 +246,8 @@ ROLLBACK;
 BEGIN;
 	\i ../init_tracker.sql
 	\i ../history_tracker.sql
+	
+	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
 	SELECT plan(10);

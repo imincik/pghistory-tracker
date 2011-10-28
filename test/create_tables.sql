@@ -1,12 +1,10 @@
 SET client_min_messages = warning;
 
-CREATE SCHEMA myschema;
 CREATE TABLE myschema.mytable
 (
 	id serial PRIMARY KEY,
 	aaa integer,
-	bbb character varying,
-	ccc boolean
+	bbb character varying
 );
 CREATE INDEX idx_mytable_id
 	ON myschema.mytable

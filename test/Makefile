@@ -1,5 +1,5 @@
 
-test:	test-init-db test-schema test-functions
+test:	test-init-db test-schema test-functions test-edit
 
 clean:	test-clean-db
 

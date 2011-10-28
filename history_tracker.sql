@@ -122,6 +122,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 -- HT_Init
+-- TODO: warn when initing already enabled table (upgrades)
 CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
