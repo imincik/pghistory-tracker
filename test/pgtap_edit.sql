@@ -20,7 +20,14 @@
 	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
-	
+	CREATE TABLE checkpoints
+	(
+		name character varying PRIMARY KEY,
+		creation timestamp DEFAULT now()
+	);
+
+
+
 	SELECT plan(27);
 	
 	-- TEST EMPTY TABLE
@@ -28,6 +35,8 @@
 	SELECT is(MAX(id), NULL, '   => Check if data table is empty.') FROM myschema.mytable;
 	SELECT is(MAX(id), NULL, '   => Check if history table is empty.') FROM hist_tracker.myschema__mytable;
 	
+	CREATE TABLE checkpoint_empty_init AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_init');
 	
 	-- INSERT
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (1, 'a');
@@ -38,7 +47,9 @@
 		'VALUES (1, 1, ''a'', False, True, 1)',
 		'   => Check timestamp values in history table.'
 		);
-
+	CREATE TABLE checkpoint_empty_insert1 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert1');
+	
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (2, 'b');
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (3, 'c');
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (4, 'd');
@@ -50,6 +61,8 @@
 			(3, 3, ''c'', False, True, 3), (4, 4, ''d'', False, True, 4)',
 		'   => Check timestamp values in history table.'
 		);
+	CREATE TABLE checkpoint_empty_insert2 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert2');
 
 	-- UPDATE
 	UPDATE myschema.mytable SET aaa = 11 WHERE aaa = 1;
@@ -63,6 +76,8 @@
 			(1, 1, ''a'', False, False, True, 5)',
 		'   => Check timestamp values in history table.'
 		);
+	CREATE TABLE checkpoint_empty_update1 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_update1');
 
 	UPDATE myschema.mytable SET aaa = 22 WHERE aaa = 2;
 	UPDATE myschema.mytable SET aaa = 33 WHERE aaa = 3;
@@ -78,6 +93,8 @@
 			(3, 3, ''c'', False, False, True, 7), (4, 4, ''d'', False, False, True, 8)',
 		'   => Check timestamp values in history table.'
 		);
+	CREATE TABLE checkpoint_empty_update2 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_update2');
 
 
 	-- DELETE
@@ -93,7 +110,9 @@
 			(3, 3, ''c'', False, False, True, 7), (4, 4, ''d'', False, False, True, 8)',
 		'   => Check timestamp values in history table.'
 		);
-	
+	CREATE TABLE checkpoint_empty_delete1 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete1');
+
 	DELETE FROM myschema.mytable WHERE aaa = 22;
 	DELETE FROM myschema.mytable WHERE aaa = 33;
 	DELETE FROM myschema.mytable WHERE aaa = 44;
@@ -108,7 +127,49 @@
 			(3, 3, ''c'', False, False, True, 7), (4, 4, ''d'', False, False, True, 8)',
 		'   => Check timestamp values in history table.'
 		);
+	CREATE TABLE checkpoint_empty_delete2 AS SELECT * FROM myschema.mytable;
+	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete2');
 
+
+	-- TEST CHECKPOINTS
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init''))',
+		'SELECT * FROM checkpoint_empty_init',
+		'   => Test checkpoint_empty_init.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert1''))',
+		'SELECT * FROM checkpoint_empty_insert1',
+		'   => Test checkpoint_empty_insert1.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert2''))',
+		'SELECT * FROM checkpoint_empty_insert2',
+		'   => Test checkpoint_empty_insert2.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update1''))',
+		'SELECT * FROM checkpoint_empty_update1',
+		'   => Test checkpoint_empty_update1.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update2''))',
+		'SELECT * FROM checkpoint_empty_update2',
+		'   => Test checkpoint_empty_update2.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_delete1''))',
+		'SELECT * FROM checkpoint_empty_delete1',
+		'   => Test checkpoint_empty_delete1.'
+	);
+	SELECT results_eq(
+		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_delete2''))',
+		'SELECT * FROM checkpoint_empty_delete2',
+		'   => Test checkpoint_empty_delete2.'
+	);
+	
+	-- TODO: test diff functions
+	
 	-- clean 
 	SELECT is(ht_drop('myschema', 'mytable'), True, '*** Drop history (empty table). ***');
 	DROP TABLE myschema.mytable;
