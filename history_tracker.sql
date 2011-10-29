@@ -28,30 +28,25 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- _HT_GetTablePkey
+-- _HT_GetTablePkey(text, text)
 CREATE OR REPLACE FUNCTION _HT_GetTablePkey(dbschema text, dbtable text)
 	RETURNS text AS
-$BODY$
+$$
+DECLARE
+	sql text;
+	ret text;
 
-dbschema = args[0]
-dbtable = args[1]
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+BEGIN
+	sql := 'SELECT column_name FROM information_schema.key_column_usage
+		WHERE table_schema = ''' || quote_ident(dbschema) || '''
+		AND table_name = ''' || quote_ident(dbtable) || '''';
 
-sql = """
-SELECT column_name FROM information_schema.key_column_usage
-	WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
-""" % vars
-ret = plpy.execute(sql)
+	EXECUTE sql INTO ret;
 
-if len(ret) == 1:
-	return ret[0]['column_name']
-elif len(ret) == 0:
-	return
-else:
-	return
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	RETURN ret;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 
