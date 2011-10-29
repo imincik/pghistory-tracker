@@ -108,7 +108,7 @@ BEGIN;
 	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
-	SELECT plan(3);
+	SELECT plan(23);
 	
 	-- ht_init
 	SELECT has_function(
@@ -250,7 +250,7 @@ BEGIN;
 	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
-	SELECT plan(10);
+	SELECT plan(4);
 
 	SELECT has_function(
 		'public',
