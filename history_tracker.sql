@@ -52,29 +52,30 @@ LANGUAGE plpgsql VOLATILE;
 
 
 
--- _HT_TableExists
+-- _HT_TableExists(text, text)
 CREATE OR REPLACE FUNCTION _HT_TableExists(dbschema text, dbtable text)
 	RETURNS boolean AS
-$BODY$
+$$
+DECLARE
+	sql text;
+	cnt integer;
 
-dbschema = args[0]
-dbtable = args[1]
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+BEGIN
+	sql := 'SELECT COUNT(*) FROM information_schema.tables
+		WHERE table_schema = ''' || quote_ident(dbschema) || ''' 
+		AND table_name = ''' || quote_ident(dbtable) || '''
+		AND table_type = ''BASE TABLE''';
 
-sql_table_exists = """
-	SELECT COUNT(*) AS count FROM information_schema.tables
-		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s' AND 
-		table_type = 'BASE TABLE';
-""" % vars
-table_exists = plpy.execute(sql_table_exists)
+	EXECUTE sql INTO cnt;
 
-if table_exists[0]['count'] > 0:
-	return True
-else:
-	return False
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	IF cnt > 0 THEN
+		RETURN True;
+	ELSE
+		RETURN False;
+	END IF;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 
