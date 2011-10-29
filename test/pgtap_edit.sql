@@ -28,7 +28,7 @@
 
 
 
-	SELECT plan(27);
+	SELECT plan(32);
 	
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), True, '*** Init history (empty table). ***');
@@ -38,7 +38,8 @@
 	CREATE TABLE checkpoint_empty_init AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_init');
 	
-	-- INSERT
+
+	-- INSERT #1
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (1, 'a');
 	SELECT is(COUNT(*)::integer, 1, '   => INSERT data #1.') FROM myschema.mytable;
 	SELECT results_eq(
@@ -49,7 +50,15 @@
 		);
 	CREATE TABLE checkpoint_empty_insert1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert1');
-	
+	-- diff
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init'')) ORDER BY id',
+		'VALUES (''+'', 1, 1, ''a'')',
+		'   => Test diff after INSERT #1.'
+	);
+
+	-- INSERT #2
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (2, 'b');
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (3, 'c');
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (4, 'd');
@@ -63,8 +72,17 @@
 		);
 	CREATE TABLE checkpoint_empty_insert2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert2');
+	-- diff
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init'')) ORDER BY id',
+		'VALUES (''+'', 1, 1, ''a''), (''+'', 2, 2, ''b''),
+		(''+'', 3, 3, ''c''), (''+'', 4, 4, ''d'')',
+		'   => Test diff after INSERT #2.'
+	);
 
-	-- UPDATE
+
+	-- UPDATE #1
 	UPDATE myschema.mytable SET aaa = 11 WHERE aaa = 1;
 	SELECT is(COUNT(*)::integer, 4, '   => UPDATE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
@@ -78,7 +96,16 @@
 		);
 	CREATE TABLE checkpoint_empty_update1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_update1');
+	-- diff
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init'')) ORDER BY id',
+		'VALUES (''+'', 1, 11, ''a''), (''+'', 2, 2, ''b''),
+		(''+'', 3, 3, ''c''), (''+'', 4, 4, ''d'')',
+		'   => Test diff after UPDATE #1.'
+	);
 
+	-- UPDATE #2
 	UPDATE myschema.mytable SET aaa = 22 WHERE aaa = 2;
 	UPDATE myschema.mytable SET aaa = 33 WHERE aaa = 3;
 	UPDATE myschema.mytable SET aaa = 44 WHERE aaa = 4;
@@ -95,9 +122,17 @@
 		);
 	CREATE TABLE checkpoint_empty_update2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_update2');
+	-- diff
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init'')) ORDER BY id',
+		'VALUES (''+'', 1, 11, ''a''), (''+'', 2, 22, ''b''),
+		(''+'', 3, 33, ''c''), (''+'', 4, 44, ''d'')',
+		'   => Test diff after UPDATE #2.'
+	);
 
 
-	-- DELETE
+	-- DELETE #1
 	DELETE FROM myschema.mytable WHERE aaa = 11;
 	SELECT is(COUNT(*)::integer, 3, '   => DELETE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
@@ -112,7 +147,16 @@
 		);
 	CREATE TABLE checkpoint_empty_delete1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete1');
+	-- diff
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init'')) ORDER BY id',
+		'VALUES (''+'', 2, 22, ''b''),
+		(''+'', 3, 33, ''c''), (''+'', 4, 44, ''d'')',
+		'   => Test diff after DELETE #1.'
+	);
 
+	-- DELETE #2
 	DELETE FROM myschema.mytable WHERE aaa = 22;
 	DELETE FROM myschema.mytable WHERE aaa = 33;
 	DELETE FROM myschema.mytable WHERE aaa = 44;
@@ -129,9 +173,17 @@
 		);
 	CREATE TABLE checkpoint_empty_delete2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete2');
+	-- diff
+	SELECT results_eq(
+		'SELECT COUNT(*)::integer FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init''))',
+		'VALUES (0)',
+		'   => Test diff after DELETE #2.'
+	);
 
 
 	-- TEST CHECKPOINTS
+	-- AtTime function
 	SELECT results_eq(
 		'SELECT * FROM myschema.mytable_attime((SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init''))',
 		'SELECT * FROM checkpoint_empty_init',
@@ -167,9 +219,7 @@
 		'SELECT * FROM checkpoint_empty_delete2',
 		'   => Test checkpoint_empty_delete2.'
 	);
-	
-	-- TODO: test diff functions
-	
+
 	-- clean 
 	SELECT is(ht_drop('myschema', 'mytable'), True, '*** Drop history (empty table). ***');
 	DROP TABLE myschema.mytable;
