@@ -147,7 +147,7 @@ sql_history_tab = """
 		USING btree (%(pkey)s);
 	
 	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 
-		'GIS history: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
+		'Origin: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 
 
