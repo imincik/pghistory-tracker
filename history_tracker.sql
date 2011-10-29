@@ -1,30 +1,27 @@
--- _HT_GetTableFields
+-- _HT_GetTableFields(text, text)
 -- TODO: return array
--- TODO: crashing if table does not exists
 CREATE OR REPLACE FUNCTION _HT_GetTableFields(dbschema text, dbtable text)
 	RETURNS text AS
-$BODY$
+$$
+DECLARE
+	sql text;
+	ret text;
 
-dbschema = args[0]
-dbtable = args[1]
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+BEGIN
+	-- TODO: array_agg does not exists in PostgreSQL 8.3
+	sql :=
+	'SELECT array_to_string(array_agg(column_name::text), '','') FROM 
+		(SELECT column_name FROM information_schema.columns
+			WHERE table_schema = ''' || quote_ident(dbschema) || '''
+			AND table_name = ''' || quote_ident(dbtable) || '''
+			ORDER BY ordinal_position) AS foo';
 
-sql = """
-	SELECT column_name FROM information_schema.columns
-		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
-		ORDER BY ordinal_position;
-""" % vars
-ret = plpy.execute(sql)
-
-if len(ret):
-	table_fields = []
-	for r in ret:
-		table_fields.append(r['column_name'])
-		
-return ','.join(f for f in table_fields)
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	EXECUTE sql INTO ret;
+	
+	RETURN ret;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 

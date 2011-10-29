@@ -22,7 +22,7 @@ BEGIN;
 	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
-	SELECT plan(10);
+	SELECT plan(11);
 
 	-- _ht_gettablefields
 	SELECT has_function(
@@ -32,7 +32,7 @@ BEGIN;
 		'*** _ht_gettablefields ***'
 	);
 	SELECT is(_ht_gettablefields('myschema', 'mytable'), 'id,aaa,bbb', '  => Testing return from existing table');
-	--SELECT is(_ht_gettablefields('myschema', 'none'), NULL, 'Testing return from non existing table');
+	SELECT is(_ht_gettablefields('myschema', 'none'), NULL, 'Testing return from non existing table');
 
 	-- _ht_gettablepkey
 	SELECT has_function(
