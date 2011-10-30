@@ -2,25 +2,29 @@
 CREATE SCHEMA hist_tracker;
 
 
--- _HT_NextTagValue
+-- _HT_NextTagValue(text, text)
 CREATE OR REPLACE FUNCTION _HT_NextTagValue(dbschema text, dbtable text)
-	RETURNS integer AS
-$BODY$
+RETURNS integer AS
+$$
+DECLARE
+	sql text;
+	cnt integer;
 
-dbschema = args[0]
-dbtable = args[1]
+BEGIN
+	sql := 'SELECT MAX(id_tag) FROM hist_tracker.tags 
+		WHERE dbschema = ''' || quote_ident(dbschema) || '''
+		AND dbtable = ''' || quote_ident(dbtable) || '''';
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+	EXECUTE sql INTO cnt;
 
-val = plpy.execute("((SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s'));" % vars )[0]['max']
-
-if val is None:
-	return 1
-else:
-	return val + 1
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	IF cnt IS NULL THEN
+		RETURN 1;
+	ELSE
+		RETURN cnt + 1;
+	END IF;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 -- hist_tracker.tags
 CREATE TABLE hist_tracker.tags (

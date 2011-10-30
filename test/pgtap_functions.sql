@@ -22,7 +22,7 @@ BEGIN;
 	CREATE SCHEMA myschema;
 	\i create_tables.sql
 
-	SELECT plan(11);
+	SELECT plan(12);
 
 	-- _ht_gettablefields
 	SELECT has_function(
@@ -52,8 +52,9 @@ BEGIN;
 		'*** _ht_nexttagvalue ***'
 	);
 	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 1, '   => Check next tag value when no records.');
-	-- TODO: add test if some tag exists
-
+	INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
+		VALUES (1, 'myschema', 'mytable', 'myuser', now(), 1, 'My message.');
+	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 2, '   => Check next tag value when one record exists.');
 
 	-- _ht_tableexists
 	SELECT has_function(
@@ -278,43 +279,3 @@ BEGIN;
 
 	SELECT * FROM finish();
 ROLLBACK;
-
-
-
----- examples
---BEGIN;
---	\i ../init_tracker.sql
---	\i ../history_tracker.sql
---	\i create_tables.sql
---
---	CREATE SCHEMA tests;
---
---	CREATE OR REPLACE FUNCTION tests.setup_insert(
---	) RETURNS SETOF TEXT AS $$
---	BEGIN
---		RETURN NEXT pass( 'setuuuup' );
---	END;
---	$$ LANGUAGE plpgsql;
---
---	CREATE OR REPLACE FUNCTION tests.my_tests1(
---	) RETURNS SETOF TEXT AS $$
---	BEGIN
---		INSERT INTO myschema.mytable (aaa, bbb, ccc) VALUES (111, 'bbb', False);
---		INSERT INTO myschema.mytable (aaa, bbb, ccc) VALUES (111, 'bbb', False);
---		RETURN NEXT pass( 'first test');
---		RETURN NEXT COUNT(id) FROM myschema.mytable;
---	END;
---	$$ LANGUAGE plpgsql;
---
---	CREATE OR REPLACE FUNCTION tests.my_tests2(
---	) RETURNS SETOF TEXT AS $$
---	BEGIN
---		INSERT INTO myschema.mytable (aaa, bbb, ccc) VALUES (111, 'bbb', False);
---		RETURN NEXT pass( 'second test');
---		RETURN NEXT COUNT(id) FROM myschema.mytable;
---	END;
---	$$ LANGUAGE plpgsql;
---
---	SELECT * FROM runtests('tests', 'my_tests');
---ROLLBACK;
---
