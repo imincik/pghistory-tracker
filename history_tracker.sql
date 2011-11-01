@@ -509,7 +509,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
---HT_Log
+--HT_Log(text, text)
 CREATE OR REPLACE FUNCTION HT_Log(text, text)
 	RETURNS SETOF hist_tracker.tags AS
 $$
@@ -517,6 +517,7 @@ $$
 $$
 LANGUAGE 'SQL';
 
+--HT_Log()
 CREATE OR REPLACE FUNCTION HT_Log()
 	RETURNS SETOF hist_tracker.tags AS
 $$
