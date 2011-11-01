@@ -28,7 +28,7 @@
 
 
 
-	SELECT plan(44);
+	SELECT plan(46);
 	
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), True, '*** Init history (empty table). ***');
@@ -243,6 +243,10 @@
 		'VALUES (0)',
 		'   => Test diff after DELETE #2.'
 	);
+
+	-- invalid tags
+	SELECT is(ht_tag('myschema', 'mytable', 'no changes'), False, '   => Invalid tag with no pending changes.');
+	SELECT is(ht_tag('noschema', 'notable', 'no changes'), False, '   => Invalid tag on non existing table.');
 
 
 	-- TEST CHECKPOINTS

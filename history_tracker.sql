@@ -437,55 +437,64 @@ LANGUAGE plpgsql VOLATILE;
 
 
 
--- HT_Tag
--- TODO: rewrite to plpgsql
+-- HT_Tag(text, text, text)
 CREATE OR REPLACE FUNCTION HT_Tag(dbschema text, dbtable text, message text)
-	RETURNS boolean AS
-$BODY$
+RETURNS boolean AS
+$$
+DECLARE
+	sql_table_exists text;
+	table_exists boolean;
 
-dbschema = args[0]
-dbtable = args[1]
-message = args[2]
+	sql_pkey text;
+	pkey text;
 
-pkey = plpy.execute("SELECT _HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
+	sql_last_tag_time text;
+	last_tag_time timestamp;
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable, 'message': message, 'pkey': pkey} 
+	sql_changes_count text;
+	changes_count integer;
 
-time_last_tag = plpy.execute("SELECT MAX(time_tag) AS time_last_tag FROM hist_tracker.tags WHERE \
-	dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
-vars['time_last_tag'] = time_last_tag[0]['time_last_tag']
+	sql_insert_tag text;
 
-if plpy.execute("SELECT _HT_TableExists('%(dbschema)s', '%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is True:
-	sql_changes_count = """	SELECT COUNT(*) AS count FROM (
-				SELECT * FROM %(dbschema)s.%(dbtable)s WHERE %(pkey)s IN
-					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
-						WHERE time_start > '%(time_last_tag)s' AND time_end IS NULL)
+BEGIN
+	sql_table_exists := 
+		'SELECT _HT_TableExists(''hist_tracker'', ''' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || ''')';
+	EXECUTE sql_table_exists INTO table_exists;
 
-				UNION ALL
+	IF table_exists = True THEN
 
-				SELECT * FROM %(dbschema)s.%(dbtable)s_AtTime('%(time_last_tag)s') WHERE %(pkey)s NOT IN
-					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s)
+		sql_pkey := 'SELECT _HT_GetTablePkey(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''')';
+		EXECUTE sql_pkey INTO pkey;
 
-				) AS foo;
-	""" % vars
-	changes_count = plpy.execute(sql_changes_count)
-	
-	vars['changes_count'] = changes_count[0]['count']
-	if vars['changes_count'] > 0:
-		plpy.execute("INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message) \
-			VALUES (_HT_NextTagValue('%(dbschema)s', '%(dbtable)s'), \
-				'%(dbschema)s', '%(dbtable)s', current_user, current_timestamp, '%(changes_count)s', '%(message)s');" % vars)
-		plpy.info('I: Tag created for %(changes_count)s changes.' % vars)
-		return True
-	else:
-		plpy.warning('W: Nothing changed since last tag.')
-		return False
-else:
-	plpy.warning('W: Table does not exists.')
-	return False
+		sql_last_tag_time := 'SELECT MAX(time_tag) FROM  hist_tracker.tags WHERE 
+			dbschema = ''' || quote_ident(dbschema) || ''' AND dbtable = ''' || quote_ident(dbtable) || '''';
+		EXECUTE sql_last_tag_time INTO last_tag_time;
 
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+		sql_changes_count := 'SELECT COUNT(*) FROM '
+			|| quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_diff(''' || last_tag_time || ''')';
+		EXECUTE sql_changes_count INTO changes_count;
+
+		IF changes_count > 0 THEN
+			sql_insert_tag := 'INSERT INTO hist_tracker.tags 
+				(id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
+				VALUES (_HT_NextTagValue(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || '''), '''
+					|| quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''', current_user, 
+					current_timestamp, ' || changes_count || ', ''' || message || ''')';
+			EXECUTE sql_insert_tag;
+			RETURN True;
+		ELSE
+			RAISE WARNING 'Nothing has changed since last tag. No tag written!';
+			RETURN False;
+		END IF;
+
+	ELSE
+		RAISE WARNING 'Table does not exists. No tag written!';
+		RETURN False;
+
+	END IF;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 
