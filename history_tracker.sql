@@ -386,73 +386,54 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 
 
--- HT_Drop
+-- HT_Drop(text, text)
 CREATE OR REPLACE FUNCTION HT_Drop(dbschema text, dbtable text)
-	RETURNS boolean AS
-$BODY$
+RETURNS boolean AS
+$$
+BEGIN
+	--INSERT
+	EXECUTE	'DROP TRIGGER tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert 
+		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION hist_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert()';
 
-dbschema = args[0]
-dbtable = args[1]
+	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_insert ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_insert()';
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+	--UPDATE
+	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_update 
+		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION hist_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_update()';
 
-#INSERT
-sql_insert_funct = """
-	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_insert ON hist_tracker.%(dbschema)s__%(dbtable)s;
-	DROP FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
+	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_update ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_update()';
 
-	DROP TRIGGER tg_%(dbtable)s_insert ON %(dbschema)s.%(dbtable)s;
-	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_insert();
-	""" % vars
-plpy.execute(sql_insert_funct)
+	--DELETE
+	EXECUTE 'DROP RULE ' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_del 
+		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+		
+	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_delete ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_delete()';
 
-#UPDATE
-sql_update_funct = """
-	DROP TRIGGER tg_%(dbschema)s__%(dbtable)s_update ON hist_tracker.%(dbschema)s__%(dbtable)s;	
-	DROP FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_update();
-	
-	DROP TRIGGER tg_%(dbtable)s_update ON %(dbschema)s.%(dbtable)s;
-	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_update();
-""" % vars
-plpy.execute(sql_update_funct)
+	--FUNCTIONS
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_Diff()';
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_AtTime(timestamp)';
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_Diff(timestamp)';
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_DiffToTag(integer)';
 
-#DELETE
-sql_delete_funct = """
-	DROP RULE %(dbschema)s__%(dbtable)s_del ON hist_tracker.%(dbschema)s__%(dbtable)s;
-	
-	DROP TRIGGER tg_%(dbtable)s_delete ON %(dbschema)s.%(dbtable)s;
-	DROP FUNCTION %(dbschema)s.tg_%(dbtable)s_delete();
-""" % vars
-plpy.execute(sql_delete_funct)
+	--TYPES
+	EXECUTE 'DROP TYPE ' || quote_ident(dbschema) || '.ht_' || quote_ident(dbtable) || '_difftype';
 
-#layer functions 
-sql_lay_funct = """
-	DROP FUNCTION %(dbschema)s.%(dbtable)s_Diff();
-	DROP FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp);
-	DROP FUNCTION %(dbschema)s.%(dbtable)s_Diff(timestamp);
-	DROP FUNCTION %(dbschema)s.%(dbtable)s_DiffToTag(integer);
-""" % vars
-plpy.execute(sql_lay_funct)
+	--TAGS
+	EXECUTE 'DELETE FROM hist_tracker.tags WHERE dbschema = ''' || quote_ident(dbschema) || ''' 
+		AND dbtable = ''' || quote_ident(dbtable) || '''';
 
-#types 
-sql_lay_funct = """
-	DROP TYPE %(dbschema)s.ht_%(dbtable)s_difftype;
-""" % vars
-plpy.execute(sql_lay_funct)
+	--HISTORY TABLE
+	EXECUTE 'DROP TABLE hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
 
-#hist_tracker.tags
-plpy.execute("DELETE FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s';" % vars)
-
-#HISTORY TAB
-sql_history_tab = """
-	DROP TABLE hist_tracker.%(dbschema)s__%(dbtable)s;
-""" % vars
-plpy.execute(sql_history_tab)
-
-return True
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	RETURN True;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 
