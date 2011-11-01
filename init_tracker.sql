@@ -38,4 +38,4 @@ CREATE TABLE hist_tracker.tags (
 	message character varying
 );
 
--- # vim: set syntax=python ts=4 sts=4 sw=4 noet: 
+-- # vim: set syntax=sql ts=4 sts=4 sw=4 noet:
