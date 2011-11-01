@@ -6,7 +6,7 @@ Ivan Mincik, Gista s.r.o., ivan.mincik@gista.sk
 
 ABOUT
 This project is set of functions which adds possibility to store full editing 
-history for Your database tables and recover its state to any time. Inspiration was 
+history of Your database tables and recover its state to any time. Inspiration was 
 taken from versioning functions created by Horst Duester and Andreas Neumann, 
 but implemented in other way. (http://www.kappasys.ch/pgtools/pghistory/index.html)
 
@@ -19,13 +19,16 @@ INSTALLATION
 Prerequisites:
 Assuming you have already working PostgreSQL database server. 
 In addition PL/Python procedural language is required. Under Debian install 
-package 'postgresql-plpython-8.3'.
+package 'postgresql-plpython-<pg version>'.
 
 Preparing database:
 1. Adding PL/PgSQL language support: 'createlang plpgsql <database>'
 2. Adding PL/Python language support: 'createlang plpythonu <database>'
 3. Init tracker: 'psql <database> -f init_tracker.sql'
 4. Loading functions: 'psql <database> -f history_tracker.sql'
+
+Compatibility:
+For using with PostgreSQL 8.3 and below load also 'array_agg.sql' file to Your database. 
 
 
 USAGE
@@ -40,6 +43,9 @@ MORE EXAMPLES OF RETRIEVING TABLE HISTORY
 
 
 NOTES
+Project is currently in alpha state. Supported PostgreSQL versions are those which exists on my machines.
+This will change soon.
+
 Good resource on retrieving PostgreSQL table metadata:
 http://www.alberton.info/postgresql_meta_info.html
 
