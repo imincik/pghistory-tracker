@@ -43,8 +43,8 @@
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (1, 'a');
 	SELECT is(COUNT(*)::integer, 1, '   => INSERT data #1.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 1, ''a'', False, True, 1)',
 		'   => Check timestamp values in history table.'
 		);
@@ -72,8 +72,8 @@
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (4, 'd');
 	SELECT is(COUNT(*)::integer, 4, '   => INSERT data #2.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 1, ''a'', False, True, 1), (2, 2, ''b'', False, True, 2),
 			(3, 3, ''c'', False, True, 3), (4, 4, ''d'', False, True, 4)',
 		'   => Check timestamp values in history table.'
@@ -103,8 +103,8 @@
 	UPDATE myschema.mytable SET aaa = 11 WHERE aaa = 1;
 	SELECT is(COUNT(*)::integer, 4, '   => UPDATE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 11, ''a'', False, True, NULL, 1), (2, 2, ''b'', False, True, NULL, 2),
 			(3, 3, ''c'', False, True, NULL, 3), (4, 4, ''d'', False, True, NULL, 4),
 
@@ -138,8 +138,8 @@
 	UPDATE myschema.mytable SET aaa = 44 WHERE aaa = 4;
 	SELECT is(COUNT(*)::integer, 4, '   => UPDATE data #2.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 11, ''a'', False, True, NULL, 1), (2, 22, ''b'', False, True, NULL, 2),
 			(3, 33, ''c'', False, True, NULL, 3), (4, 44, ''d'', False, True, NULL, 4),
 			
@@ -174,8 +174,8 @@
 	DELETE FROM myschema.mytable WHERE aaa = 11;
 	SELECT is(COUNT(*)::integer, 3, '   => DELETE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 11, ''a'', False, False, True, 1), (2, 22, ''b'', False, True, NULL, 2),
 			(3, 33, ''c'', False, True, NULL, 3), (4, 44, ''d'', False, True, NULL, 4),
 			
@@ -212,8 +212,8 @@
 	DELETE FROM myschema.mytable WHERE aaa = 44;
 	SELECT is(COUNT(*)::integer, 0, '   => DELETE data #2.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 11, ''a'', False, False, True, 1), (2, 22, ''b'', False, False, True, 2),
 			(3, 33, ''c'', False, False, True, 3), (4, 44, ''d'', False, False, True, 4),
 			
@@ -304,8 +304,8 @@
 	SELECT is(ht_init('myschema', 'mytable'), True, '*** Init history (populated table). ***');
 	SELECT is(MAX(id), 4, '   => Check if data table has data.') FROM myschema.mytable;
 	SELECT results_eq(
-		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM history_tracker.myschema__mytable ORDER BY id_hist',
+		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_history
+			FROM history_tracker.myschema__mytable ORDER BY id_history',
 		'VALUES (1, 1, ''a'', False, True, 1), (2, 2, ''b'', False, True, 2),
 			(3, 3, ''c'', False, True, 3), (4, 4, ''d'', False, True, 4)',
 		'   => Check timestamp values in history table.'

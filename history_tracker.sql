@@ -134,12 +134,12 @@ sql_history_tab = """
 	CREATE TABLE history_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
 	ALTER TABLE history_tracker.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
-		ADD dbuser character varying, ADD id_hist serial;
-	ALTER TABLE history_tracker.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
+		ADD dbuser character varying, ADD id_history serial;
+	ALTER TABLE history_tracker.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_history);
 	
-	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
+	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_history
 		ON history_tracker.%(dbschema)s__%(dbtable)s
-		USING btree (id_hist);
+		USING btree (id_history);
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_%(pkey)s
 		ON history_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (%(pkey)s);
@@ -373,7 +373,7 @@ sql_delete_funct = """
 	DROP RULE IF EXISTS %(dbschema)s__%(dbtable)s_del ON history_tracker.%(dbschema)s__%(dbtable)s;
 	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO history_tracker.%(dbschema)s__%(dbtable)s
 	DO INSTEAD UPDATE history_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
-		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
+		WHERE id_history = OLD.id_history AND time_end IS NULL;
 """ % vars
 plpy.execute(sql_delete_funct)
 

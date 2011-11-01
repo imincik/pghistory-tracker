@@ -8,13 +8,13 @@ CREATE TYPE test_gisdata__t_data_type AS (
 	ggg boolean,
 	time_start_end boolean,
 	dbuser character varying,
-	id_hist integer
+	id_history integer
 );
 
 CREATE OR REPLACE FUNCTION test_gisdata__t_data()
 RETURNS SETOF test_gisdata__t_data_type AS 
 $$
-SELECT id, eee, fff, ggg, (time_start < time_end), dbuser, id_hist FROM history_tracker.gisdata__t_data;
+SELECT id, eee, fff, ggg, (time_start < time_end), dbuser, id_history FROM history_tracker.gisdata__t_data;
 $$
 LANGUAGE SQL;
 
@@ -26,13 +26,13 @@ CREATE TYPE test_gis__v_layer_type AS (
 	ccc boolean,
 	time_start_end boolean,
 	dbuser character varying,
-	id_hist integer
+	id_history integer
 );
 
 CREATE OR REPLACE FUNCTION test_gis__v_layer()
 RETURNS SETOF test_gis__v_layer_type AS 
 $$
-SELECT gid, aaa, bbb, ccc, (time_start < time_end), dbuser, id_hist FROM history_tracker.gis__v_layer;
+SELECT gid, aaa, bbb, ccc, (time_start < time_end), dbuser, id_history FROM history_tracker.gis__v_layer;
 $$
 LANGUAGE SQL;
 

@@ -145,21 +145,21 @@ BEGIN;
 	SELECT has_column(
 		'history_tracker',
 		'myschema__mytable',
-		'id_hist',
-		'   => Check if history table has column id_hist.'
+		'id_history',
+		'   => Check if history table has column id_history.'
 	);
 	SELECT col_is_pk(
 		'history_tracker',
 		'myschema__mytable',
-		'id_hist',
-		'   => Check if id_hist column is PK.'
+		'id_history',
+		'   => Check if id_history column is PK.'
 	);
 	SELECT has_index(
 		'history_tracker',
 		'myschema__mytable',
-		'idx_myschema__mytable_id_hist',
-		ARRAY['id_hist'],
-		'   => Check if history table has index on id_hist column.'
+		'idx_myschema__mytable_id_history',
+		ARRAY['id_history'],
+		'   => Check if history table has index on id_history column.'
 	);
 	SELECT has_index(
 		'history_tracker',
