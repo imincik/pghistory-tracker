@@ -77,39 +77,38 @@ LANGUAGE plpgsql VOLATILE;
 
 
 
--- _HT_CreateDiffType
+-- _HT_CreateDiffType(text, text)
 CREATE OR REPLACE FUNCTION _HT_CreateDiffType(dbschema text, dbtable text)
-	RETURNS boolean AS
-$BODY$
+RETURNS boolean AS
+$$
+DECLARE
+	sql_get_fields text;
+	rec RECORD;
+	
+	fields text;
+	sql_create_type text;
 
-dbschema = args[0]
-dbtable = args[1]
-vars = {'dbschema': dbschema, 'dbtable': dbtable} 
+BEGIN
 
-sql_type_schema = """
-	SELECT column_name, udt_name FROM information_schema.columns
-		WHERE table_schema = '%(dbschema)s' AND table_name = '%(dbtable)s'
-		ORDER BY ordinal_position;
-""" % vars
-ret_type_schema = plpy.execute(sql_type_schema)
+	sql_get_fields := 'SELECT column_name, udt_name FROM information_schema.columns
+		WHERE table_schema = ''' || quote_ident(dbschema) || ''' 
+		AND table_name = ''' || quote_ident(dbtable) || '''
+		ORDER BY ordinal_position';
 
-if len(ret_type_schema):
-	type_schema = []
-	for r in ret_type_schema:
-		type_schema.append('%s %s' % (r['column_name'], r['udt_name']))
-		
-vars['type_schema_def'] = ','.join(f for f in type_schema)
+	fields := 'operation character(1)';
+	FOR rec IN EXECUTE(sql_get_fields) LOOP
+		fields := fields || ', ' || rec.column_name || ' ' || rec.udt_name;
+	END LOOP;
 
-sql_create_type = """
-	CREATE TYPE %(dbschema)s.ht_%(dbtable)s_difftype AS 
-		(operation character(1), %(type_schema_def)s);
-""" % vars
-plpy.execute(sql_create_type)
+	sql_create_type := 
+		'CREATE TYPE ' || quote_ident(dbschema) || '.' || 'ht_' || quote_ident(dbtable) || '_difftype AS (' ||
+		fields || ')';
+	EXECUTE sql_create_type;
 
-return True
-
-$BODY$
-LANGUAGE 'plpythonu' VOLATILE;
+	RETURN True;
+END;
+$$
+LANGUAGE plpgsql VOLATILE;
 
 
 
