@@ -8,7 +8,6 @@ DECLARE
 	ret text;
 
 BEGIN
-	-- TODO: array_agg does not exists in PostgreSQL 8.3
 	sql :=
 	'SELECT array_to_string(array_agg(column_name::text), '','') FROM 
 		(SELECT column_name FROM information_schema.columns
