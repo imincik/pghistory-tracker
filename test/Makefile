@@ -1,15 +1,16 @@
+PG_SHAREDIR := $(shell pg_config --sharedir)
 
 test:	test-init-db test-schema test-functions test-edit
 
 clean:	test-clean-db
 
 
-test-init-db: 
+test-init-db:
 	createdb history_tracker_test
 	createlang plpgsql history_tracker_test
 	createlang plpythonu history_tracker_test
 	
-	psql history_tracker_test -f /usr/share/postgresql/8.4/contrib/pgtap.sql >/dev/null
+	psql history_tracker_test -f $(PG_SHAREDIR)/contrib/pgtap.sql >/dev/null
 
 test-schema:
 	psql history_tracker_test -f pgtap_schema.sql
