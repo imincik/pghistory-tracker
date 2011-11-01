@@ -1,5 +1,5 @@
--- hist_tracker
-CREATE SCHEMA hist_tracker;
+-- history_tracker
+CREATE SCHEMA history_tracker;
 
 
 -- _HT_NextTagValue(text, text)
@@ -11,7 +11,7 @@ DECLARE
 	cnt integer;
 
 BEGIN
-	sql := 'SELECT MAX(id_tag) FROM hist_tracker.tags 
+	sql := 'SELECT MAX(id_tag) FROM history_tracker.tags 
 		WHERE dbschema = ''' || quote_ident(dbschema) || '''
 		AND dbtable = ''' || quote_ident(dbtable) || '''';
 
@@ -26,8 +26,8 @@ END;
 $$
 LANGUAGE plpgsql VOLATILE;
 
--- hist_tracker.tags
-CREATE TABLE hist_tracker.tags (
+-- history_tracker.tags
+CREATE TABLE history_tracker.tags (
 	id serial PRIMARY KEY,
 	id_tag integer CHECK (id_tag = _HT_NextTagValue(dbschema, dbtable)),
 	dbschema character varying,

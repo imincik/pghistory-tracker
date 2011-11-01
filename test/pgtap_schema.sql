@@ -19,13 +19,13 @@ SELECT plan(2);
 
 -- Test if schemas exists
 SELECT schemas_are(
-	ARRAY['public', 'hist_tracker'],
+	ARRAY['public', 'history_tracker'],
 	'Check if initial schemas exists'
 );
 
 -- Test if tables exists
 SELECT tables_are(
-	'hist_tracker',
+	'history_tracker',
 	ARRAY['tags'],
 	'Check if core tables exists'
 );

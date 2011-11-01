@@ -131,34 +131,34 @@ vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_field
 
 #HISTORY TAB
 sql_history_tab = """
-	CREATE TABLE hist_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
+	CREATE TABLE history_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;
 
-	ALTER TABLE hist_tracker.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
+	ALTER TABLE history_tracker.%(dbschema)s__%(dbtable)s ADD time_start timestamp, ADD time_end timestamp, 
 		ADD dbuser character varying, ADD id_hist serial;
-	ALTER TABLE hist_tracker.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
+	ALTER TABLE history_tracker.%(dbschema)s__%(dbtable)s ADD PRIMARY KEY (id_hist);
 	
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_id_hist
-		ON hist_tracker.%(dbschema)s__%(dbtable)s
+		ON history_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (id_hist);
 	CREATE INDEX idx_%(dbschema)s__%(dbtable)s_%(pkey)s
-		ON hist_tracker.%(dbschema)s__%(dbtable)s
+		ON history_tracker.%(dbschema)s__%(dbtable)s
 		USING btree (%(pkey)s);
 	
-	COMMENT ON TABLE hist_tracker.%(dbschema)s__%(dbtable)s IS 
+	COMMENT ON TABLE history_tracker.%(dbschema)s__%(dbtable)s IS 
 		'Origin: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
 """ % vars
 
 
 sql_history_tab2 = """
-	UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_start = now();
+	UPDATE history_tracker.%(dbschema)s__%(dbtable)s SET time_start = now();
 	
-	INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, message, changes_count)
+	INSERT INTO history_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, message, changes_count)
 		VALUES (1, '%(dbschema)s', '%(dbtable)s', '%(dbuser)s', current_timestamp, 'History init.', 0);
 """ % vars
 
 sql_create_difftype = "SELECT _HT_CreateDiffType('%(dbschema)s', '%(dbtable)s');" % vars
 
-if plpy.execute("SELECT _HT_TableExists('hist_tracker', '%(dbschema)s__%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is False:
+if plpy.execute("SELECT _HT_TableExists('history_tracker', '%(dbschema)s__%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is False:
 	plpy.execute(sql_history_tab)
 	plpy.execute(sql_history_tab2)
 	plpy.execute(sql_create_difftype)
@@ -169,7 +169,7 @@ sql_attime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_AtTime(timestamp)
 	RETURNS SETOF %(dbschema)s.%(dbtable)s AS
 	$$
-	SELECT %(table_fields)s FROM hist_tracker.%(dbschema)s__%(dbtable)s WHERE
+	SELECT %(table_fields)s FROM history_tracker.%(dbschema)s__%(dbtable)s WHERE
 		( SELECT CASE WHEN time_end IS NULL THEN (time_start <= $1) ELSE (time_start <= $1 AND time_end > $1) END );
 	$$
 	LANGUAGE 'SQL';
@@ -186,24 +186,24 @@ sql_difftotime_funct = """
 	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
 	$$
 	BEGIN
-		IF difftime >= (SELECT MIN(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
+		IF difftime >= (SELECT MIN(time_tag) FROM history_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
 			RETURN QUERY
 				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
 				WHERE %(pkey)s IN
-					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					(SELECT DISTINCT %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s   
 						WHERE time_start > difftime AND time_end IS NULL)
 				AND %(pkey)s IN
-					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s   
 						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 				UNION ALL
 				
 				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s 
 				WHERE %(pkey)s IN
-					(SELECT DISTINCT %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					(SELECT DISTINCT %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s   
 						WHERE time_start > difftime AND time_end IS NULL)
 				AND %(pkey)s NOT IN
-					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM hist_tracker.%(dbschema)s__%(dbtable)s   
+					(SELECT DISTINCT ON (%(pkey)s) %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s   
 						WHERE time_start <= difftime ORDER BY %(pkey)s, time_start DESC)
 
 				UNION ALL
@@ -230,7 +230,7 @@ sql_difftotime_funct = """
 		difftime timestamp;
 		ret_row record;
 	BEGIN
-		difftime := (SELECT MAX(time_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
+		difftime := (SELECT MAX(time_tag) FROM history_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s');
 		FOR ret_row IN SELECT * FROM %(dbschema)s.%(dbtable)s_Diff(difftime) LOOP
 			RETURN NEXT ret_row;
 		END LOOP;
@@ -250,8 +250,8 @@ sql_difftotime_funct = """
 		difftime timestamp;
 		ret_row record;
 	BEGIN
-		IF difftag <= (SELECT MAX(id_tag) FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
-			difftime := (SELECT time_tag FROM hist_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s' AND id_tag = difftag);
+		IF difftag <= (SELECT MAX(id_tag) FROM history_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') THEN
+			difftime := (SELECT time_tag FROM history_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s' AND id_tag = difftag);
 			FOR ret_row IN SELECT * FROM %(dbschema)s.%(dbtable)s_Diff(difftime) LOOP
 				RETURN NEXT ret_row;
 			END LOOP;
@@ -276,7 +276,7 @@ sql_insert_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		INSERT INTO hist_tracker.%(dbschema)s__%(dbtable)s VALUES (NEW.*);	
+		INSERT INTO history_tracker.%(dbschema)s__%(dbtable)s VALUES (NEW.*);	
 	RETURN NEW;
 	END;
 	$$
@@ -288,7 +288,7 @@ sql_insert_funct = """
 
 	
 	
-	CREATE OR REPLACE FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert()
+	CREATE OR REPLACE FUNCTION history_tracker.tg_%(dbschema)s__%(dbtable)s_insert()
 	RETURNS trigger AS
 	$$
 	BEGIN
@@ -302,9 +302,9 @@ sql_insert_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 
-	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_insert ON hist_tracker.%(dbschema)s__%(dbtable)s;
-	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON hist_tracker.%(dbschema)s__%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
+	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_insert ON history_tracker.%(dbschema)s__%(dbtable)s;
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_insert BEFORE INSERT ON history_tracker.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE history_tracker.tg_%(dbschema)s__%(dbtable)s_insert();
 	""" % vars
 plpy.execute(sql_insert_funct)
 
@@ -318,7 +318,7 @@ sql_update_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE %(pkey)s = NEW.%(pkey)s;
+		UPDATE history_tracker.%(dbschema)s__%(dbtable)s SET %(sql_update_str1)s WHERE %(pkey)s = NEW.%(pkey)s;
 	RETURN NEW;
 	END;
 	$$
@@ -330,7 +330,7 @@ sql_update_funct = """
 
 
 
-	CREATE OR REPLACE FUNCTION hist_tracker.tg_%(dbschema)s__%(dbtable)s_update()
+	CREATE OR REPLACE FUNCTION history_tracker.tg_%(dbschema)s__%(dbtable)s_update()
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
@@ -338,7 +338,7 @@ sql_update_funct = """
 	RETURN NULL;
 	END IF;
 	IF NEW.time_end IS NULL THEN
-	INSERT INTO hist_tracker.%(dbschema)s__%(dbtable)s
+	INSERT INTO history_tracker.%(dbschema)s__%(dbtable)s
 		(%(table_fields)s, time_start, time_end, dbuser) VALUES (%(sql_update_str2)s, OLD.time_start, current_timestamp, current_user);
 	NEW.time_start = current_timestamp;
 	END IF;
@@ -347,9 +347,9 @@ sql_update_funct = """
 	$$
 	LANGUAGE 'plpgsql';
 	
-	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_update ON hist_tracker.%(dbschema)s__%(dbtable)s;
-	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON hist_tracker.%(dbschema)s__%(dbtable)s
-	FOR EACH ROW EXECUTE PROCEDURE hist_tracker.tg_%(dbschema)s__%(dbtable)s_update();
+	DROP TRIGGER IF EXISTS tg_%(dbschema)s__%(dbtable)s_update ON history_tracker.%(dbschema)s__%(dbtable)s;
+	CREATE TRIGGER tg_%(dbschema)s__%(dbtable)s_update BEFORE UPDATE ON history_tracker.%(dbschema)s__%(dbtable)s
+	FOR EACH ROW EXECUTE PROCEDURE history_tracker.tg_%(dbschema)s__%(dbtable)s_update();
 """ % sql_update_vars
 plpy.execute(sql_update_funct)
 
@@ -360,7 +360,7 @@ sql_delete_funct = """
 	RETURNS TRIGGER AS
 	$$
 	BEGIN
-		DELETE FROM hist_tracker.%(dbschema)s__%(dbtable)s WHERE %(pkey)s = OLD.%(pkey)s;
+		DELETE FROM history_tracker.%(dbschema)s__%(dbtable)s WHERE %(pkey)s = OLD.%(pkey)s;
 	RETURN OLD;
 	END;
 	$$
@@ -370,9 +370,9 @@ sql_delete_funct = """
 	CREATE TRIGGER tg_%(dbtable)s_delete BEFORE DELETE ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_delete();
 
-	DROP RULE IF EXISTS %(dbschema)s__%(dbtable)s_del ON hist_tracker.%(dbschema)s__%(dbtable)s;
-	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO hist_tracker.%(dbschema)s__%(dbtable)s
-	DO INSTEAD UPDATE hist_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
+	DROP RULE IF EXISTS %(dbschema)s__%(dbtable)s_del ON history_tracker.%(dbschema)s__%(dbtable)s;
+	CREATE RULE %(dbschema)s__%(dbtable)s_del AS ON DELETE TO history_tracker.%(dbschema)s__%(dbtable)s
+	DO INSTEAD UPDATE history_tracker.%(dbschema)s__%(dbtable)s SET time_end = current_timestamp, dbuser = current_user
 		WHERE id_hist = OLD.id_hist AND time_end IS NULL;
 """ % vars
 plpy.execute(sql_delete_funct)
@@ -392,23 +392,23 @@ $$
 BEGIN
 	--INSERT
 	EXECUTE	'DROP TRIGGER tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert 
-		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
-	EXECUTE 'DROP FUNCTION hist_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert()';
+		ON history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION history_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert()';
 
 	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_insert ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_insert()';
 
 	--UPDATE
 	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_update 
-		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
-	EXECUTE 'DROP FUNCTION hist_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_update()';
+		ON history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+	EXECUTE 'DROP FUNCTION history_tracker.tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_update()';
 
 	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_update ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_update()';
 
 	--DELETE
 	EXECUTE 'DROP RULE ' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_del 
-		ON hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+		ON history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
 		
 	EXECUTE 'DROP TRIGGER tg_' || quote_ident(dbtable) || '_delete ON ' || quote_ident(dbschema) || '.' || quote_ident(dbtable);
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.tg_' || quote_ident(dbtable) || '_delete()';
@@ -423,11 +423,11 @@ BEGIN
 	EXECUTE 'DROP TYPE ' || quote_ident(dbschema) || '.ht_' || quote_ident(dbtable) || '_difftype';
 
 	--TAGS
-	EXECUTE 'DELETE FROM hist_tracker.tags WHERE dbschema = ''' || quote_ident(dbschema) || ''' 
+	EXECUTE 'DELETE FROM history_tracker.tags WHERE dbschema = ''' || quote_ident(dbschema) || ''' 
 		AND dbtable = ''' || quote_ident(dbtable) || '''';
 
 	--HISTORY TABLE
-	EXECUTE 'DROP TABLE hist_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
+	EXECUTE 'DROP TABLE history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
 
 	RETURN True;
 END;
@@ -458,7 +458,7 @@ DECLARE
 
 BEGIN
 	sql_table_exists := 
-		'SELECT _HT_TableExists(''hist_tracker'', ''' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || ''')';
+		'SELECT _HT_TableExists(''history_tracker'', ''' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || ''')';
 	EXECUTE sql_table_exists INTO table_exists;
 
 	IF table_exists = True THEN
@@ -466,7 +466,7 @@ BEGIN
 		sql_pkey := 'SELECT _HT_GetTablePkey(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''')';
 		EXECUTE sql_pkey INTO pkey;
 
-		sql_last_tag_time := 'SELECT MAX(time_tag) FROM  hist_tracker.tags WHERE 
+		sql_last_tag_time := 'SELECT MAX(time_tag) FROM  history_tracker.tags WHERE 
 			dbschema = ''' || quote_ident(dbschema) || ''' AND dbtable = ''' || quote_ident(dbtable) || '''';
 		EXECUTE sql_last_tag_time INTO last_tag_time;
 
@@ -475,7 +475,7 @@ BEGIN
 		EXECUTE sql_changes_count INTO changes_count;
 
 		IF changes_count > 0 THEN
-			sql_insert_tag := 'INSERT INTO hist_tracker.tags 
+			sql_insert_tag := 'INSERT INTO history_tracker.tags 
 				(id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
 				VALUES (_HT_NextTagValue(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || '''), '''
 					|| quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''', current_user, 
@@ -500,17 +500,17 @@ LANGUAGE plpgsql VOLATILE;
 
 --HT_Log(text, text)
 CREATE OR REPLACE FUNCTION HT_Log(text, text)
-	RETURNS SETOF hist_tracker.tags AS
+	RETURNS SETOF history_tracker.tags AS
 $$
-	SELECT * FROM hist_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
+	SELECT * FROM history_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
 
 --HT_Log()
 CREATE OR REPLACE FUNCTION HT_Log()
-	RETURNS SETOF hist_tracker.tags AS
+	RETURNS SETOF history_tracker.tags AS
 $$
-	SELECT * FROM hist_tracker.tags ORDER BY id DESC;
+	SELECT * FROM history_tracker.tags ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
 

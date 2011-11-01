@@ -33,7 +33,7 @@
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), True, '*** Init history (empty table). ***');
 	SELECT is(MAX(id), NULL, '   => Check if data table is empty.') FROM myschema.mytable;
-	SELECT is(MAX(id), NULL, '   => Check if history table is empty.') FROM hist_tracker.myschema__mytable;
+	SELECT is(MAX(id), NULL, '   => Check if history table is empty.') FROM history_tracker.myschema__mytable;
 	
 	CREATE TABLE checkpoint_empty_init AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_init');
@@ -44,7 +44,7 @@
 	SELECT is(COUNT(*)::integer, 1, '   => INSERT data #1.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 1, ''a'', False, True, 1)',
 		'   => Check timestamp values in history table.'
 		);
@@ -53,7 +53,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_insert1'), True, '   => Tag checkpoint_empty_insert1.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1'')',
 		'   => Test tags after INSERT #1.'
@@ -73,7 +73,7 @@
 	SELECT is(COUNT(*)::integer, 4, '   => INSERT data #2.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 1, ''a'', False, True, 1), (2, 2, ''b'', False, True, 2),
 			(3, 3, ''c'', False, True, 3), (4, 4, ''d'', False, True, 4)',
 		'   => Check timestamp values in history table.'
@@ -83,7 +83,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_insert2'), True, '   => Tag checkpoint_empty_insert2.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1''),
 			(3, 3, ''myschema'', ''mytable'', 3, ''checkpoint_empty_insert2'')',
@@ -104,7 +104,7 @@
 	SELECT is(COUNT(*)::integer, 4, '   => UPDATE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 11, ''a'', False, True, NULL, 1), (2, 2, ''b'', False, True, NULL, 2),
 			(3, 3, ''c'', False, True, NULL, 3), (4, 4, ''d'', False, True, NULL, 4),
 
@@ -116,7 +116,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_update1'), True, '   => Tag checkpoint_empty_update1.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1''),
 			(3, 3, ''myschema'', ''mytable'', 3, ''checkpoint_empty_insert2''),
@@ -139,7 +139,7 @@
 	SELECT is(COUNT(*)::integer, 4, '   => UPDATE data #2.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 11, ''a'', False, True, NULL, 1), (2, 22, ''b'', False, True, NULL, 2),
 			(3, 33, ''c'', False, True, NULL, 3), (4, 44, ''d'', False, True, NULL, 4),
 			
@@ -152,7 +152,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_update2'), True, '   => Tag checkpoint_empty_update2.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1''),
 			(3, 3, ''myschema'', ''mytable'', 3, ''checkpoint_empty_insert2''),
@@ -175,7 +175,7 @@
 	SELECT is(COUNT(*)::integer, 3, '   => DELETE data #1.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 11, ''a'', False, False, True, 1), (2, 22, ''b'', False, True, NULL, 2),
 			(3, 33, ''c'', False, True, NULL, 3), (4, 44, ''d'', False, True, NULL, 4),
 			
@@ -188,7 +188,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_delete1'), True, '   => Tag checkpoint_empty_delete1.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1''),
 			(3, 3, ''myschema'', ''mytable'', 3, ''checkpoint_empty_insert2''),
@@ -213,7 +213,7 @@
 	SELECT is(COUNT(*)::integer, 0, '   => DELETE data #2.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, time_end > time_start, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 11, ''a'', False, False, True, 1), (2, 22, ''b'', False, False, True, 2),
 			(3, 33, ''c'', False, False, True, 3), (4, 44, ''d'', False, False, True, 4),
 			
@@ -226,7 +226,7 @@
 	-- tag
 	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_delete2'), True, '   => Tag checkpoint_empty_delete2.');
 	SELECT results_eq(
-		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
+		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM history_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
 			(2, 2, ''myschema'', ''mytable'', 1, ''checkpoint_empty_insert1''),
 			(3, 3, ''myschema'', ''mytable'', 3, ''checkpoint_empty_insert2''),
@@ -305,7 +305,7 @@
 	SELECT is(MAX(id), 4, '   => Check if data table has data.') FROM myschema.mytable;
 	SELECT results_eq(
 		'SELECT id, aaa, bbb::text, time_start IS NULL, time_end IS NULL, id_hist
-			FROM hist_tracker.myschema__mytable ORDER BY id_hist',
+			FROM history_tracker.myschema__mytable ORDER BY id_hist',
 		'VALUES (1, 1, ''a'', False, True, 1), (2, 2, ''b'', False, True, 2),
 			(3, 3, ''c'', False, True, 3), (4, 4, ''d'', False, True, 4)',
 		'   => Check timestamp values in history table.'

@@ -52,7 +52,7 @@ BEGIN;
 		'*** _ht_nexttagvalue ***'
 	);
 	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 1, '   => Check next tag value when no records.');
-	INSERT INTO hist_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
+	INSERT INTO history_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
 		VALUES (1, 'myschema', 'mytable', 'myuser', now(), 1, 'My message.');
 	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 2, '   => Check next tag value when one record exists.');
 
@@ -120,49 +120,49 @@ BEGIN;
 	);
 	SELECT is(ht_init('myschema', 'mytable'), True, '   => Init table.');
 	SELECT has_table(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'   => Check if history table exists.'
 	);
 	SELECT has_column(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'time_start',
 		'   => Check if history table has column time_start.'
 	);
 	SELECT has_column(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'time_end',
 		'   => Check if history table has column time_end.'
 	);
 	SELECT has_column(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'dbuser',
 		'   => Check if history table has column dbuser.'
 	);
 	SELECT has_column(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'id_hist',
 		'   => Check if history table has column id_hist.'
 	);
 	SELECT col_is_pk(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'id_hist',
 		'   => Check if id_hist column is PK.'
 	);
 	SELECT has_index(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'idx_myschema__mytable_id_hist',
 		ARRAY['id_hist'],
 		'   => Check if history table has index on id_hist column.'
 	);
 	SELECT has_index(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'idx_myschema__mytable_id',
 		ARRAY['id'],
@@ -170,7 +170,7 @@ BEGIN;
 	);
 	-- TODO: test updating all time_start values to now()
 	SELECT results_eq(
-		'SELECT id_tag, dbschema::text, dbtable::text, message::text, changes_count FROM hist_tracker.tags',
+		'SELECT id_tag, dbschema::text, dbtable::text, message::text, changes_count FROM history_tracker.tags',
 		'VALUES (1, ''myschema'', ''mytable'', ''History init.'', 0)',
 		'   => Check initial tag values.'
 	);
@@ -203,7 +203,7 @@ BEGIN;
 		'   => Check if delete trigger exists.'
 	);
 	SELECT has_rule(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'myschema__mytable_del',
 		'   => Check if delete rule exists.'
@@ -230,12 +230,12 @@ BEGIN;
 		'   => Check if diff type has gone.'
 	);
 	SELECT results_eq(
-		'SELECT COUNT(*)::integer FROM hist_tracker.tags',
+		'SELECT COUNT(*)::integer FROM history_tracker.tags',
 		$$ VALUES (0) $$,
 		'   => Check if tags has gone.'
 	);
 	SELECT hasnt_table(
-		'hist_tracker',
+		'history_tracker',
 		'myschema__mytable',
 		'   => Check if history table has gone.'
 	);
