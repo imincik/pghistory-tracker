@@ -28,7 +28,7 @@
 
 
 
-	SELECT plan(38);
+	SELECT plan(44);
 	
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), True, '*** Init history (empty table). ***');
@@ -51,7 +51,7 @@
 	CREATE TABLE checkpoint_empty_insert1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert1');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_insert1');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_insert1'), True, '   => Tag checkpoint_empty_insert1.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
@@ -81,7 +81,7 @@
 	CREATE TABLE checkpoint_empty_insert2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_insert2');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_insert2');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_insert2'), True, '   => Tag checkpoint_empty_insert2.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
@@ -114,7 +114,7 @@
 	CREATE TABLE checkpoint_empty_update1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_update1');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_update1');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_update1'), True, '   => Tag checkpoint_empty_update1.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
@@ -150,7 +150,7 @@
 	CREATE TABLE checkpoint_empty_update2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_update2');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_update2');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_update2'), True, '   => Tag checkpoint_empty_update2.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
@@ -186,7 +186,7 @@
 	CREATE TABLE checkpoint_empty_delete1 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete1');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_delete1');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_delete1'), True, '   => Tag checkpoint_empty_delete1.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
@@ -224,7 +224,7 @@
 	CREATE TABLE checkpoint_empty_delete2 AS SELECT * FROM myschema.mytable;
 	INSERT INTO checkpoints VALUES ('checkpoint_empty_delete2');
 	-- tag
-	SELECT ht_tag('myschema', 'mytable', 'checkpoint_empty_delete2');
+	SELECT is(ht_tag('myschema', 'mytable', 'checkpoint_empty_delete2'), True, '   => Tag checkpoint_empty_delete2.');
 	SELECT results_eq(
 		'SELECT id, id_tag, dbschema::text, dbtable::text, changes_count, message::text FROM hist_tracker.tags ORDER BY id',
 		'VALUES (1, 1, ''myschema'', ''mytable'', 0, ''History init.''),
