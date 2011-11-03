@@ -1,5 +1,6 @@
 -- history_tracker
 CREATE SCHEMA history_tracker;
+GRANT ALL ON SCHEMA history_tracker TO public;
 
 
 -- _HT_NextTagValue(text, text)
