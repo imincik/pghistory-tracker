@@ -13,7 +13,7 @@
 \set QUIET 1
 
 BEGIN;
-	\i init_tracker.sql
+	\i init_database.sql
 
 SELECT plan(2);
 

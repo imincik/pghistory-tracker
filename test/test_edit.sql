@@ -14,7 +14,7 @@
 
 
 --BEGIN; can not use transaction because we need real timestamp values (all timestamps in trasaction equals !)
-	\i init_tracker.sql
+	\i init_database.sql
 	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
