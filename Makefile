@@ -16,7 +16,7 @@ test-init-db:
 	psql history_tracker_test -f test/pgtap.sql >/dev/null
 
 	# uncomment this when testing against PostgreSQL 8.3
-	#psql history_tracker_test -f array_agg.sql
+	#psql history_tracker_test -f compat/array_agg.sql
 
 test-schema:
 	psql history_tracker_test -f test/test_schema.sql

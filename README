@@ -28,7 +28,7 @@ Preparing database:
 4. Loading functions: 'psql <database> -f history_tracker.sql'
 
 Compatibility:
-For using with PostgreSQL 8.3 and below load also 'array_agg.sql' file to Your database. 
+For using with PostgreSQL 8.3 and below load also 'compat/array_agg.sql' file to Your database. 
 
 
 USAGE
@@ -50,7 +50,7 @@ Project is currently tested in PostgreSQL 8.3 and 8.4 versions.
 
 NOTES
 When running tests against PostgreSQL 8.3 load PgTAP compatibility patch 'test/pgtap-8.3.patch' and
-uncomment line in Makefile to load 'array_agg.sql' file.
+uncomment line in Makefile to load 'compat/array_agg.sql' file.
 
 
 Good resource on retrieving PostgreSQL table metadata:
