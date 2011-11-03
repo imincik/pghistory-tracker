@@ -118,7 +118,7 @@ BEGIN;
 		ARRAY['text', 'text'],
 		'*** ht_init ***'
 	);
-	SELECT is(ht_init('myschema', 'mytable'), True, '   => Init table.');
+	SELECT is(ht_init('myschema', 'mytable'), 'History is enabled.', '   => Init table.');
 	SELECT has_table(
 		'history_tracker',
 		'myschema__mytable',
@@ -218,7 +218,7 @@ BEGIN;
 		ARRAY['text', 'text'],
 		'*** ht_drop ***'
 	);
-	SELECT is(ht_drop('myschema', 'mytable'), True, '   => Drop table.');
+	SELECT is(ht_drop('myschema', 'mytable'), 'History is disabled.', '   => Drop table.');
 	SELECT functions_are(
 		'myschema',
 		NULL,

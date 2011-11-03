@@ -115,7 +115,7 @@ LANGUAGE plpgsql VOLATILE;
 -- HT_Init
 -- TODO: warn when initing already enabled table (upgrades)
 CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
-	RETURNS boolean AS
+	RETURNS text AS
 $BODY$
 
 dbschema = args[0]
@@ -375,7 +375,7 @@ sql_delete_funct = """
 """ % vars
 plpy.execute(sql_delete_funct)
 
-return True
+return "History is enabled."
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
@@ -385,7 +385,7 @@ LANGUAGE 'plpythonu' VOLATILE;
 
 -- HT_Drop(text, text)
 CREATE OR REPLACE FUNCTION HT_Drop(dbschema text, dbtable text)
-RETURNS boolean AS
+RETURNS text AS
 $$
 BEGIN
 	--INSERT
@@ -427,7 +427,7 @@ BEGIN
 	--HISTORY TABLE
 	EXECUTE 'DROP TABLE history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
 
-	RETURN True;
+	RETURN 'History is disabled.';
 END;
 $$
 LANGUAGE plpgsql VOLATILE;
@@ -437,7 +437,7 @@ LANGUAGE plpgsql VOLATILE;
 
 -- HT_Tag(text, text, text)
 CREATE OR REPLACE FUNCTION HT_Tag(dbschema text, dbtable text, message text)
-RETURNS boolean AS
+RETURNS text AS
 $$
 DECLARE
 	sql_table_exists text;
@@ -479,15 +479,13 @@ BEGIN
 					|| quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''', current_user, 
 					current_timestamp, ' || changes_count || ', ''' || message || ''')';
 			EXECUTE sql_insert_tag;
-			RETURN True;
+			RETURN 'Tag recorded.';
 		ELSE
-			RAISE WARNING 'Nothing has changed since last tag. No tag written!';
-			RETURN False;
+			RETURN 'Nothing has changed since last tag. No tag written!';
 		END IF;
 
 	ELSE
-		RAISE WARNING 'Table does not exists. No tag written!';
-		RETURN False;
+		RETURN 'Table does not exists. No tag written!';
 
 	END IF;
 END;
