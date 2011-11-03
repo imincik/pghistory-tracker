@@ -1,0 +1,67 @@
+--- pgtap.sql.orig	2011-02-01 14:54:33.000000000 -0800
++++ pgtap.sql	2011-02-01 14:54:33.000000000 -0800
+@@ -15,6 +15,11 @@
+ RETURNS text AS 'SELECT current_setting(''server_version'')'
+ LANGUAGE SQL IMMUTABLE;
+ 
++--CREATE OR REPLACE FUNCTION pg_typeof("any")
++--RETURNS regtype
++--AS '$libdir/pgtap'
++--LANGUAGE C STABLE;
++
+ CREATE OR REPLACE FUNCTION pg_version_num()
+ RETURNS integer AS $$
+     SELECT s.a[1]::int * 10000
+@@ -5891,8 +5896,9 @@
+         SELECT pg_catalog.format_type(a.atttypid, a.atttypmod)
+           FROM pg_catalog.pg_attribute a
+           JOIN pg_catalog.pg_class c ON a.attrelid = c.oid
++          JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+          WHERE c.relname = $1
+-           AND c.relistemp
++           AND n.nspname LIKE 'pg_temp%'
+            AND attnum > 0
+            AND NOT attisdropped
+          ORDER BY attnum
+@@ -6239,7 +6245,7 @@
+     FETCH want INTO want_rec;
+     want_found := FOUND;
+     WHILE have_found OR want_found LOOP
+-        IF have_rec IS DISTINCT FROM want_rec OR have_found <> want_found THEN
++        IF have_rec::text IS DISTINCT FROM want_rec::text OR have_found <> want_found THEN
+             RETURN ok( false, $3 ) || E'\n' || diag(
+                 '    Results differ beginning at row ' || rownum || E':\n' ||
+                 '        have: ' || CASE WHEN have_found THEN have_rec::text ELSE 'NULL' END || E'\n' ||
+@@ -6394,7 +6400,7 @@
+     FETCH want INTO want_rec;
+     want_found := FOUND;
+     WHILE have_found OR want_found LOOP
+-        IF have_rec IS DISTINCT FROM want_rec OR have_found <> want_found THEN
++        IF have_rec::text IS DISTINCT FROM want_rec::text OR have_found <> want_found THEN
+             RETURN ok( true, $3 );
+         ELSE
+             FETCH have INTO have_rec;
+@@ -6580,13 +6586,7 @@
+ $$ LANGUAGE sql;
+ 
+ -- collect_tap( tap, tap, tap )
+-CREATE OR REPLACE FUNCTION collect_tap( VARIADIC text[] )
+-RETURNS TEXT AS $$
+-    SELECT array_to_string($1, E'\n');
+-$$ LANGUAGE sql;
+-
+--- collect_tap( tap[] )
+-CREATE OR REPLACE FUNCTION collect_tap( VARCHAR[] )
++CREATE OR REPLACE FUNCTION collect_tap( text[] )
+ RETURNS TEXT AS $$
+     SELECT array_to_string($1, E'\n');
+ $$ LANGUAGE sql;
+@@ -7058,7 +7058,7 @@
+     rec    RECORD;
+ BEGIN
+     EXECUTE _query($1) INTO rec;
+-    IF NOT rec IS DISTINCT FROM $2 THEN RETURN ok(true, $3); END IF;
++    IF NOT rec::text IS DISTINCT FROM $2::text THEN RETURN ok(true, $3); END IF;
+     RETURN ok(false, $3 ) || E'\n' || diag(
+            '        have: ' || CASE WHEN rec IS NULL THEN 'NULL' ELSE rec::text END ||
+         E'\n        want: ' || CASE WHEN $2  IS NULL THEN 'NULL' ELSE $2::text  END
