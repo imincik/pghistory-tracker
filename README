@@ -34,6 +34,8 @@ For using with PostgreSQL 8.3 and below load also 'array_agg.sql' file to Your d
 USAGE
 1. Adding versioning support to table: 'SELECT HT_Init('<schema>', '<table>');'
 2. Retrieving table state in particulal time: 'SELECT * FROM <schema>.<table>_AtTime('<timestamp>');'
+3. Retrieving table changes to particulal time: 'SELECT * FROM <schema>.<table>_Diff('<timestamp>');'
+4. Retrieving table changes to particulal tag: 'SELECT * FROM <schema>.<table>_DiffToTag(<tag number>);'
 
 
 MORE EXAMPLES OF RETRIEVING TABLE HISTORY
