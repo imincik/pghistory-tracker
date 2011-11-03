@@ -14,11 +14,11 @@
 
 
 --BEGIN; can not use transaction because we need real timestamp values (all timestamps in trasaction equals !)
-	\i ../init_tracker.sql
-	\i ../history_tracker.sql
+	\i init_tracker.sql
+	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
-	\i create_tables.sql
+	\i test/create_tables.sql
 
 	CREATE TABLE checkpoints
 	(
@@ -294,7 +294,7 @@
 
 
 	-- TEST POPULATED TABLE
-	\i create_tables.sql
+	\i test/create_tables.sql
 	
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (1, 'a');
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (2, 'b');

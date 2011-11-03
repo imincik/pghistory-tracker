@@ -16,11 +16,11 @@
 
 
 BEGIN;
-	\i ../init_tracker.sql
-	\i ../history_tracker.sql
+	\i init_tracker.sql
+	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
-	\i create_tables.sql
+	\i test/create_tables.sql
 
 	SELECT plan(12);
 
@@ -75,11 +75,11 @@ ROLLBACK;
 
 -- _ht_createdifftype
 BEGIN;
-	\i ../init_tracker.sql
-	\i ../history_tracker.sql
+	\i init_tracker.sql
+	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
-	\i create_tables.sql
+	\i test/create_tables.sql
 
 	SELECT plan(3);
 	SELECT has_function(
@@ -103,11 +103,11 @@ ROLLBACK;
 
 -- ht_init and ht_drop
 BEGIN;
-	\i ../init_tracker.sql
-	\i ../history_tracker.sql
+	\i init_tracker.sql
+	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
-	\i create_tables.sql
+	\i test/create_tables.sql
 
 	SELECT plan(23);
 	
@@ -245,11 +245,11 @@ ROLLBACK;
 
 
 BEGIN;
-	\i ../init_tracker.sql
-	\i ../history_tracker.sql
+	\i init_tracker.sql
+	\i history_tracker.sql
 	
 	CREATE SCHEMA myschema;
-	\i create_tables.sql
+	\i test/create_tables.sql
 
 	SELECT plan(4);
 
