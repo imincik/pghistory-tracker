@@ -123,7 +123,7 @@ dbtable = args[1]
 dbuser = plpy.execute("SELECT current_user AS current_user")[0]['current_user']
 table_fields = plpy.execute("SELECT _HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
 pkey = plpy.execute("SELECT _HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
-current_timestamp = plpy.execute("SELECT current_timestamp AS current_timestamp")[0]['current_timestamp']
+current_timestamp = plpy.execute("SELECT current_timestamp(0) AS current_timestamp")[0]['current_timestamp']
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'current_timestamp': current_timestamp}
 
