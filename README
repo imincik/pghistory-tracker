@@ -44,9 +44,14 @@ MORE EXAMPLES OF RETRIEVING TABLE HISTORY
 3. One hour ago: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp - INTERVAL '1 hour');'
 
 
+SUPPORTED POSTGRESQL VERSIONS
+Project is currently tested in PostgreSQL 8.3 and 8.4 versions.
+
+
 NOTES
-Project is currently in alpha state. Supported PostgreSQL versions are those which exists on my machines.
-This will change soon.
+When running tests against PostgreSQL 8.3 load PgTAP compatibility patch 'test/pgtap-8.3.patch' and
+uncomment line in Makefile to load 'array_agg.sql' file.
+
 
 Good resource on retrieving PostgreSQL table metadata:
 http://www.alberton.info/postgresql_meta_info.html
