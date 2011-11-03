@@ -118,16 +118,14 @@ CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
 	RETURNS boolean AS
 $BODY$
 
-from datetime import datetime
-
 dbschema = args[0]
 dbtable = args[1]
-dbuser = plpy.execute("SELECT current_user")[0]['current_user']
+dbuser = plpy.execute("SELECT current_user AS current_user")[0]['current_user']
 table_fields = plpy.execute("SELECT _HT_GetTableFields('%s', '%s') AS table_fields" % (dbschema, dbtable))[0]['table_fields']
 pkey = plpy.execute("SELECT _HT_GetTablePkey('%s', '%s') AS pkey" % (dbschema, dbtable))[0]['pkey']
-dtime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+current_timestamp = plpy.execute("SELECT current_timestamp AS current_timestamp")[0]['current_timestamp']
 
-vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'dtime': dtime} 
+vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'current_timestamp': current_timestamp}
 
 #HISTORY TAB
 sql_history_tab = """
@@ -145,7 +143,7 @@ sql_history_tab = """
 		USING btree (%(pkey)s);
 	
 	COMMENT ON TABLE history_tracker.%(dbschema)s__%(dbtable)s IS 
-		'Origin: %(dbschema)s.%(dbtable)s, Created: %(dtime)s, Creator: %(dbuser)s.';
+		'Origin: %(dbschema)s.%(dbtable)s, Created: %(current_timestamp)s, Creator: %(dbuser)s.';
 """ % vars
 
 
