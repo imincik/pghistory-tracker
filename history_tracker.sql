@@ -113,7 +113,6 @@ LANGUAGE plpgsql VOLATILE;
 
 
 -- HT_Init
--- TODO: warn when initing already enabled table (upgrades)
 CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
@@ -160,7 +159,8 @@ if plpy.execute("SELECT _HT_TableExists('history_tracker', '%(dbschema)s__%(dbta
 	plpy.execute(sql_history_tab)
 	plpy.execute(sql_history_tab2)
 	plpy.execute(sql_create_difftype)
-
+else:
+	plpy.warning('History already enabled, upgrading history triggers.')
 
 #AtTime function 
 sql_attime_funct = """

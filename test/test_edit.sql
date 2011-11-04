@@ -28,7 +28,7 @@
 
 
 
-	SELECT plan(46);
+	SELECT plan(47);
 	
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), 'History is enabled.', '*** Init history (empty table). ***');
@@ -311,6 +311,7 @@
 		'   => Check timestamp values in history table.'
 		);
 
+	SELECT is(ht_init('myschema', 'mytable'), 'History is enabled.', '*** Upgrade history triggers. ***');
 
 	SELECT * FROM finish();
 --ROLLBACK;
