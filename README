@@ -49,7 +49,7 @@ Project is currently tested in PostgreSQL 8.3 and 8.4 versions.
 
 
 NOTES
-When running tests against PostgreSQL 8.3 load PgTAP compatibility patch 'test/pgtap-8.3.patch' and
+When running tests against PostgreSQL 8.3 load PgTAP compatibility patch 'compat/pgtap-8.3.patch' and
 uncomment line in Makefile to load 'compat/array_agg.sql' file.
 
 
