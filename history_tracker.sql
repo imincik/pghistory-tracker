@@ -1,6 +1,6 @@
 -- HT_Version()
 CREATE OR REPLACE FUNCTION HT_Version()
-	RETURNS text AS 'SELECT ''v0.1-beta1''::text AS version;'
+	RETURNS text AS 'SELECT ''0.1-beta1''::text AS version;'
 LANGUAGE SQL;
 
 
