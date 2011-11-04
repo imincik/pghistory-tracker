@@ -1,3 +1,11 @@
+-- HT_Version()
+CREATE OR REPLACE FUNCTION HT_Version()
+	RETURNS text AS 'SELECT ''v0.1-beta1''::text AS version;'
+LANGUAGE SQL;
+
+
+
+
 -- _HT_GetTableFields(text, text)
 -- TODO: return array
 CREATE OR REPLACE FUNCTION _HT_GetTableFields(dbschema text, dbtable text)
