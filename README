@@ -6,7 +6,8 @@ Ivan Mincik, Gista s.r.o., ivan.mincik@gista.sk
 
 ABOUT
 This project is set of functions which adds possibility to store full editing 
-history of Your database tables and recover its state to any time. Inspiration was 
+history of Your database tables, recover its state to any time, visualize diffs 
+and place tags to mark particular table state. Inspiration was 
 taken from versioning functions created by Horst Duester and Andreas Neumann, 
 but implemented in other way. (http://www.kappasys.ch/pgtools/pghistory/index.html)
 
@@ -38,7 +39,7 @@ USAGE
 4. Retrieving table changes to particulal tag: 'SELECT * FROM <schema>.<table>_DiffToTag(<tag number>);'
 
 
-MORE EXAMPLES OF RETRIEVING TABLE HISTORY
+More examples of retrieving table history:
 1. Current state: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp);'
 2. Five minutes ago: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp - INTERVAL '5 minutes');'
 3. One hour ago: 'SELECT * FROM <schema>.<table>_AtTime(localtimestamp - INTERVAL '1 hour');'
@@ -46,6 +47,13 @@ MORE EXAMPLES OF RETRIEVING TABLE HISTORY
 
 SUPPORTED POSTGRESQL VERSIONS
 Project is currently tested in PostgreSQL 8.3 and 8.4 versions.
+
+
+HOW IT WORKS
+After running 'HT_Init' function, 'history table' is created in 'history_tracker' schema. This table will
+save all editing history. To achieve this, set of trigger functions is appended to your original table to enable
+forwarding of all editing information to 'history table'. No other changes to your original table. 
+Adding and removing history should be fully invisible for any client software.
 
 
 NOTES
