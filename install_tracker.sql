@@ -120,7 +120,7 @@ LANGUAGE plpgsql VOLATILE;
 
 
 
--- HT_Init
+-- HT_Init(text, text)
 CREATE OR REPLACE FUNCTION HT_Init(dbschema text, dbtable text)
 	RETURNS text AS
 $BODY$
