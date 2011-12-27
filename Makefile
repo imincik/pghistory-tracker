@@ -1,12 +1,10 @@
 # uncomment this to load installed pgtap version
 #PG_SHAREDIR := $(shell pg_config --sharedir)
 
-test:	test-init-db test-schema test-functions test-edit
-
-clean:	test-clean-db
+test:	test-create-db test-init-schema test-install test-edit test-uninstall test-drop-schema
 
 
-test-init-db:
+test-create-db:
 	createdb history_tracker_test
 	createlang plpgsql history_tracker_test
 	createlang plpythonu history_tracker_test
@@ -18,14 +16,24 @@ test-init-db:
 	# uncomment this when testing against PostgreSQL 8.3
 	#psql history_tracker_test -f compat/array_agg.sql
 
-test-schema:
-	psql history_tracker_test -f test/test_schema.sql
+test-drop-db:
+	dropdb history_tracker_test
 
-test-functions:
-	psql history_tracker_test -f test/test_functions.sql
+
+test-init-schema:
+	psql history_tracker_test -f test/test_init_schema.sql
+
+test-install:
+	psql history_tracker_test -f test/test_install.sql
 
 test-edit:
 	psql history_tracker_test -f test/test_edit.sql
 
-test-clean-db:
+test-uninstall:
+	make test-drop-db
+	make test-create-db
+	psql history_tracker_test -f test/test_uninstall.sql
+
+test-drop-schema:
+	psql history_tracker_test -f test/test_drop_schema.sql
 	dropdb history_tracker_test
