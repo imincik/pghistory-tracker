@@ -17,7 +17,7 @@
 
 BEGIN;
 	\i init_database.sql
-	\i history_tracker.sql
+	\i install_tracker.sql
 	
 	CREATE SCHEMA myschema;
 	\i test/create_tables.sql
@@ -76,7 +76,7 @@ ROLLBACK;
 -- _ht_createdifftype
 BEGIN;
 	\i init_database.sql
-	\i history_tracker.sql
+	\i install_tracker.sql
 	
 	CREATE SCHEMA myschema;
 	\i test/create_tables.sql
@@ -104,7 +104,7 @@ ROLLBACK;
 -- ht_init and ht_drop
 BEGIN;
 	\i init_database.sql
-	\i history_tracker.sql
+	\i install_tracker.sql
 	
 	CREATE SCHEMA myschema;
 	\i test/create_tables.sql
@@ -246,7 +246,7 @@ ROLLBACK;
 
 BEGIN;
 	\i init_database.sql
-	\i history_tracker.sql
+	\i install_tracker.sql
 	
 	CREATE SCHEMA myschema;
 	\i test/create_tables.sql

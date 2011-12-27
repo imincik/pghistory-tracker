@@ -26,7 +26,7 @@ Preparing database:
 1. Adding PL/PgSQL language support: 'createlang plpgsql <database>'
 2. Adding PL/Python language support: 'createlang plpythonu <database>'
 3. Init tracker: 'psql <database> -f init_database.sql'
-4. Loading functions: 'psql <database> -f history_tracker.sql'
+4. Loading functions: 'psql <database> -f install_tracker.sql'
 
 Compatibility:
 For using with PostgreSQL 8.3 and below load also 'compat/array_agg.sql' file to Your database. 
