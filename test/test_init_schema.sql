@@ -13,7 +13,7 @@
 \set QUIET 1
 
 BEGIN;
-	\i init_database.sql
+	\i init_schema.sql
 
 SELECT plan(2);
 
