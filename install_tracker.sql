@@ -134,6 +134,10 @@ current_timestamp = plpy.execute("SELECT current_timestamp(0) AS current_timesta
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'current_timestamp': current_timestamp}
 
+# test if table exists
+if plpy.execute("SELECT _HT_TableExists('%(dbschema)s', '%(dbtable)s') AS tableexists" % vars)[0]['tableexists'] is False:
+	plpy.error('Table does not exist.')
+
 # test if table is containing primary key
 if vars['pkey'] is None:
 	plpy.error('Table is missing primary key.')
