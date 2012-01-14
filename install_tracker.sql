@@ -134,6 +134,10 @@ current_timestamp = plpy.execute("SELECT current_timestamp(0) AS current_timesta
 
 vars = {'dbschema': dbschema, 'dbtable': dbtable, 'dbuser': dbuser, 'table_fields': table_fields, 'pkey': pkey, 'current_timestamp': current_timestamp}
 
+# test if table is containing primary key
+if vars['pkey'] is None:
+	plpy.error('Table is missing primary key.')
+
 #HISTORY TAB
 sql_history_tab = """
 	CREATE TABLE history_tracker.%(dbschema)s__%(dbtable)s AS SELECT * FROM %(dbschema)s.%(dbtable)s;

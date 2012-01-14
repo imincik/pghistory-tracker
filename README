@@ -16,6 +16,10 @@ LICENSE
 The GNU General Public License version 2 (GPLv2)
 
 
+PREREQUISITES
+All tables MUST contain primary key (currently only one-column primary key is supported).
+
+
 INSTALLATION 
 Prerequisites:
 Assuming you have already working PostgreSQL database server. 
