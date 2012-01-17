@@ -21,7 +21,7 @@ BEGIN
 		(SELECT column_name FROM information_schema.columns
 			WHERE table_schema = ''' || quote_ident(dbschema) || '''
 			AND table_name = ''' || quote_ident(dbtable) || '''
-			ORDER BY ordinal_position) AS foo';
+		ORDER BY ordinal_position) AS foo';
 
 	EXECUTE sql INTO ret;
 	
