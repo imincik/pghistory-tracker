@@ -297,7 +297,7 @@ sql_insert_funct = """
 	LANGUAGE 'plpgsql';
 
 	DROP TRIGGER IF EXISTS tg_%(dbtable)s_insert ON %(dbschema)s.%(dbtable)s;
-	CREATE TRIGGER tg_%(dbtable)s_insert BEFORE INSERT ON %(dbschema)s.%(dbtable)s
+	CREATE TRIGGER tg_%(dbtable)s_insert AFTER INSERT ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_insert();
 
 	
@@ -339,7 +339,7 @@ sql_update_funct = """
 	LANGUAGE 'plpgsql';
 
 	DROP TRIGGER IF EXISTS tg_%(dbtable)s_update ON %(dbschema)s.%(dbtable)s;
-	CREATE TRIGGER tg_%(dbtable)s_update BEFORE UPDATE ON %(dbschema)s.%(dbtable)s
+	CREATE TRIGGER tg_%(dbtable)s_update AFTER UPDATE ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_update();
 
 
@@ -381,7 +381,7 @@ sql_delete_funct = """
 	LANGUAGE 'plpgsql';
 
 	DROP TRIGGER IF EXISTS tg_%(dbtable)s_delete ON %(dbschema)s.%(dbtable)s;
-	CREATE TRIGGER tg_%(dbtable)s_delete BEFORE DELETE ON %(dbschema)s.%(dbtable)s
+	CREATE TRIGGER tg_%(dbtable)s_delete AFTER DELETE ON %(dbschema)s.%(dbtable)s
 	FOR EACH ROW EXECUTE PROCEDURE %(dbschema)s.tg_%(dbtable)s_delete();
 
 	DROP RULE IF EXISTS %(dbschema)s__%(dbtable)s_del ON history_tracker.%(dbschema)s__%(dbtable)s;
