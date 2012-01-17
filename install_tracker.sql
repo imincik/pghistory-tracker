@@ -469,8 +469,8 @@ CREATE OR REPLACE FUNCTION HT_Tag(dbschema text, dbtable text, message text)
 RETURNS text AS
 $$
 DECLARE
-	sql_table_exists text;
-	table_exists boolean;
+	sql_hist_table_exists text;
+	hist_table_exists boolean;
 
 	sql_pkey text;
 	pkey text;
@@ -484,38 +484,38 @@ DECLARE
 	sql_insert_tag text;
 
 BEGIN
-	sql_table_exists := 
+	-- test if history is enabled
+	sql_hist_table_exists := 
 		'SELECT _HT_TableExists(''history_tracker'', ''' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || ''')';
-	EXECUTE sql_table_exists INTO table_exists;
+	EXECUTE sql_hist_table_exists INTO hist_table_exists;
 
-	IF table_exists = True THEN
+	IF hist_table_exists IS False THEN
+		RAISE EXCEPTION 'History is not enabled or table does not exists.';
+	END IF;
 
-		sql_pkey := 'SELECT _HT_GetTablePkey(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''')';
-		EXECUTE sql_pkey INTO pkey;
+	-- table properties
+	sql_pkey := 'SELECT _HT_GetTablePkey(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''')';
+	EXECUTE sql_pkey INTO pkey;
 
-		sql_last_tag_time := 'SELECT MAX(time_tag) FROM  history_tracker.tags WHERE 
-			dbschema = ''' || quote_ident(dbschema) || ''' AND dbtable = ''' || quote_ident(dbtable) || '''';
-		EXECUTE sql_last_tag_time INTO last_tag_time;
+	sql_last_tag_time := 'SELECT MAX(time_tag) FROM  history_tracker.tags WHERE 
+		dbschema = ''' || quote_ident(dbschema) || ''' AND dbtable = ''' || quote_ident(dbtable) || '''';
+	EXECUTE sql_last_tag_time INTO last_tag_time;
 
-		sql_changes_count := 'SELECT COUNT(*) FROM '
-			|| quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_diff(''' || last_tag_time || ''')';
-		EXECUTE sql_changes_count INTO changes_count;
+	sql_changes_count := 'SELECT COUNT(*) FROM '
+		|| quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_diff(''' || last_tag_time || ''')';
+	EXECUTE sql_changes_count INTO changes_count;
 
-		IF changes_count > 0 THEN
-			sql_insert_tag := 'INSERT INTO history_tracker.tags 
-				(id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
-				VALUES (_HT_NextTagValue(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || '''), '''
-					|| quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''', current_user, 
-					current_timestamp, ' || changes_count || ', ''' || message || ''')';
-			EXECUTE sql_insert_tag;
-			RETURN 'Tag recorded.';
-		ELSE
-			RETURN 'Nothing has changed since last tag. No tag written!';
-		END IF;
-
+	-- insert tag
+	IF changes_count > 0 THEN
+		sql_insert_tag := 'INSERT INTO history_tracker.tags 
+			(id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
+			VALUES (_HT_NextTagValue(''' || quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || '''), '''
+				|| quote_ident(dbschema) || ''', ''' || quote_ident(dbtable) || ''', current_user, 
+				current_timestamp, ' || changes_count || ', ''' || message || ''')';
+		EXECUTE sql_insert_tag;
+		RETURN 'Tag recorded.';
 	ELSE
-		RETURN 'Table does not exists. No tag written!';
-
+		RETURN 'Nothing has changed since last tag. No tag written!';
 	END IF;
 END;
 $$

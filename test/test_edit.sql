@@ -245,8 +245,13 @@
 	);
 
 	-- invalid tags
-	SELECT is(ht_tag('myschema', 'mytable', 'no changes'), 'Nothing has changed since last tag. No tag written!', '   => Invalid tag with no pending changes.');
-	SELECT is(ht_tag('noschema', 'notable', 'no changes'), 'Table does not exists. No tag written!', '   => Invalid tag on non existing table.');
+	SELECT is(ht_tag('myschema', 'mytable', 'no changes'),
+		'Nothing has changed since last tag. No tag written!',
+		'   => Invalid tag with no pending changes.');
+	SELECT throws_ok('SELECT ht_tag(''noschema'', ''notable'', ''no changes'')',
+		'P0001',
+		'History is not enabled or table does not exists.',
+		'   => Invalid tag on non existing table.');
 
 
 	-- TEST CHECKPOINTS
