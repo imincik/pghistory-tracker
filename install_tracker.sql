@@ -403,7 +403,20 @@ LANGUAGE 'plpythonu' VOLATILE;
 CREATE OR REPLACE FUNCTION HT_Drop(dbschema text, dbtable text)
 RETURNS text AS
 $$
+DECLARE
+	sql_hist_table_exists text;
+	hist_table_exists boolean;
+
 BEGIN
+	-- test if history is enabled
+	sql_hist_table_exists :=
+		'SELECT _HT_TableExists(''history_tracker'', ''' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || ''')';
+	EXECUTE sql_hist_table_exists INTO hist_table_exists;
+
+	IF hist_table_exists IS False THEN
+		RAISE EXCEPTION 'History is not enabled.';
+	END IF;
+
 	--INSERT
 	EXECUTE	'DROP TRIGGER tg_' || quote_ident(dbschema) || '__' || quote_ident(dbtable) || '_insert 
 		ON history_tracker.' || quote_ident(dbschema) || '__' || quote_ident(dbtable);
