@@ -56,9 +56,10 @@ Project is currently tested in PostgreSQL 8.3 and 8.4 versions.
 HOW IT WORKS
 After running 'HT_Init' function, 'history table' is created in 'history_tracker' schema. This table will
 save all editing history. To achieve this, set of trigger functions is appended to your original table to enable
-forwarding of all editing information to 'history table'. No other changes to your original table. 
-Adding and removing history should be fully invisible for any client software.
+forwarding of all editing information to 'history table'. No other changes to your original table. Table structure
+can not be changed after running 'HT_Init'.
 
+Adding and removing history should be fully invisible for any client software.
 
 NOTES
 When running tests against PostgreSQL 8.3 load PgTAP compatibility patch 'compat/pgtap-8.3.patch' and
