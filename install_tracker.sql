@@ -515,7 +515,8 @@ BEGIN
 		EXECUTE sql_insert_tag;
 		RETURN 'Tag recorded.';
 	ELSE
-		RETURN 'Nothing has changed since last tag. No tag written!';
+		RAISE WARNING 'Nothing has changed since last tag.';
+		RETURN 'No tag written.';
 	END IF;
 END;
 $$

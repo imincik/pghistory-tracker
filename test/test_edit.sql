@@ -246,7 +246,7 @@
 
 	-- invalid tags
 	SELECT is(ht_tag('myschema', 'mytable', 'no changes'),
-		'Nothing has changed since last tag. No tag written!',
+		'No tag written.',
 		'   => Invalid tag with no pending changes.');
 	SELECT throws_ok('SELECT ht_tag(''noschema'', ''notable'', ''no changes'')',
 		'P0001',
