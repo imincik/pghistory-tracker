@@ -12,6 +12,8 @@
 \set ON_ERROR_STOP true
 \set QUIET 1
 
+SET client_min_messages = WARNING;
+
 BEGIN;
 	\i init_schema.sql
 

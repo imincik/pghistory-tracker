@@ -5,35 +5,48 @@ test:	test-create-db test-init-schema test-install test-edit test-uninstall test
 
 
 test-create-db:
-	createdb history_tracker_test
-	createlang plpgsql history_tracker_test
-	createlang plpythonu history_tracker_test
+	@createdb history_tracker_test
+	@createlang plpgsql history_tracker_test
+	@createlang plpythonu history_tracker_test
 	
-	# uncomment this to load installed pgtap version
-	#psql history_tracker_test -f $(PG_SHAREDIR)/contrib/pgtap.sql >/dev/null
-	psql history_tracker_test -f test/pgtap.sql >/dev/null
+	@# uncomment this to load installed pgtap version
+	@#psql history_tracker_test -f $(PG_SHAREDIR)/contrib/pgtap.sql >/dev/null
+	@psql history_tracker_test -f test/pgtap.sql >/dev/null
 
-	# uncomment this when testing against PostgreSQL 8.3
-	#psql history_tracker_test -f compat/array_agg.sql
+	@# uncomment this when testing against PostgreSQL 8.3
+	@#psql history_tracker_test -f compat/array_agg.sql
+
+	@echo
 
 test-drop-db:
-	dropdb history_tracker_test
+	@dropdb history_tracker_test
 
+	@echo
 
 test-init-schema:
-	psql history_tracker_test -f test/test_init_schema.sql
+	@pg_prove --dbname history_tracker_test test/test_init_schema.sql
+
+	@echo
 
 test-install:
-	psql history_tracker_test -f test/test_install.sql
+	@pg_prove --dbname history_tracker_test test/test_install*.sql
+
+	@echo
 
 test-edit:
-	psql history_tracker_test -f test/test_edit.sql
+	@pg_prove --dbname history_tracker_test test/test_edit.sql
+
+	@echo
 
 test-uninstall:
-	make test-drop-db
-	make test-create-db
-	psql history_tracker_test -f test/test_uninstall.sql
+	@make test-drop-db
+	@make test-create-db
+	@pg_prove --dbname history_tracker_test test/test_uninstall.sql
+
+	@echo
 
 test-drop-schema:
-	psql history_tracker_test -f test/test_drop_schema.sql
-	dropdb history_tracker_test
+	@pg_prove --dbname history_tracker_test test/test_drop_schema.sql
+	@dropdb history_tracker_test
+
+	@echo

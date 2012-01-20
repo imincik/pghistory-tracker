@@ -12,94 +12,7 @@
 \set ON_ERROR_STOP true
 \set QUIET 1
 
-
-
-
-BEGIN;
-	\i init_schema.sql
-	\i install_tracker.sql
-	
-	CREATE SCHEMA myschema;
-	\i test/create_tables.sql
-
-	SELECT plan(12);
-
-	-- _ht_gettablefields
-	SELECT has_function(
-		'public',
-		'_ht_gettablefields',
-		ARRAY['text', 'text'],
-		'*** _ht_gettablefields ***'
-	);
-	SELECT is(_ht_gettablefields('myschema', 'mytable'), 'id,aaa,bbb', '  => Testing return from existing table');
-	SELECT is(_ht_gettablefields('myschema', 'none'), NULL, 'Testing return from non existing table');
-
-	-- _ht_gettablepkey
-	SELECT has_function(
-		'public',
-		'_ht_gettablepkey',
-		ARRAY['text', 'text'],
-		'*** _ht_gettablepkey ***'
-	);
-	SELECT is(_ht_gettablepkey('myschema', 'mytable'), 'id', '  => Testing return from existing table');
-	SELECT is(_ht_gettablepkey('myschema', 'none'), NULL, '  => Testing return from non existing table');
-
-	-- _ht_nexttagvalue
-	SELECT has_function(
-		'public',
-		'_ht_nexttagvalue',
-		ARRAY['text', 'text'],
-		'*** _ht_nexttagvalue ***'
-	);
-	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 1, '   => Check next tag value when no records.');
-	INSERT INTO history_tracker.tags (id_tag, dbschema, dbtable, dbuser, time_tag, changes_count, message)
-		VALUES (1, 'myschema', 'mytable', 'myuser', now(), 1, 'My message.');
-	SELECT is(_ht_nexttagvalue('myschema', 'mytable'), 2, '   => Check next tag value when one record exists.');
-
-	-- _ht_tableexists
-	SELECT has_function(
-		'public',
-		'_ht_tableexists',
-		ARRAY['text', 'text'],
-		'*** _ht_tableexists function ***'
-	);
-	SELECT is(_ht_tableexists('myschema', 'mytable'), True, '  => Table should exist');
-	SELECT is(_ht_tableexists('myschema', 'none'), False, '  => Table should NOT exist');
-
-
-	SELECT * FROM finish();
-ROLLBACK;
-
-
-
-
--- _ht_createdifftype
-BEGIN;
-	\i init_schema.sql
-	\i install_tracker.sql
-	
-	CREATE SCHEMA myschema;
-	\i test/create_tables.sql
-
-	SELECT plan(3);
-	SELECT has_function(
-		'public',
-		'_ht_createdifftype',
-		ARRAY['text', 'text'],
-		'*** _ht_createdifftype ***'
-	);
-	SELECT is(_ht_createdifftype('myschema', 'mytable'), True, '   => Create diff type.');
-	SELECT has_type(
-		'myschema',
-		'ht_mytable_difftype',
-		'   => Check if diff type exists.'
-	);
-
-	SELECT * FROM finish();
-ROLLBACK;
-
-
-
+SET client_min_messages = WARNING;
 
 -- ht_init and ht_drop
 BEGIN;
@@ -238,43 +151,6 @@ BEGIN;
 		'history_tracker',
 		'myschema__mytable',
 		'   => Check if history table has gone.'
-	);
-
-	SELECT * FROM finish();
-ROLLBACK;
-
-
-BEGIN;
-	\i init_schema.sql
-	\i install_tracker.sql
-	
-	CREATE SCHEMA myschema;
-	\i test/create_tables.sql
-
-	SELECT plan(4);
-
-	SELECT has_function(
-		'public',
-		'ht_drop',
-		ARRAY['text', 'text'],
-		'Check if ht_drop function exists'
-	);
-	SELECT has_function(
-		'public',
-		'ht_log',
-		ARRAY['text', 'text'],
-		'Check if ht_log function exists'
-	);
-	SELECT has_function(
-		'public',
-		'ht_log',
-		'Check if ht_log function exists'
-	);
-	SELECT has_function(
-		'public',
-		'ht_tag',
-		ARRAY['text', 'text', 'text'],
-		'Check if ht_tag function exists'
 	);
 
 	SELECT * FROM finish();
