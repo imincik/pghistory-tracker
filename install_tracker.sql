@@ -2,6 +2,8 @@
 CREATE OR REPLACE FUNCTION HT_Version()
 	RETURNS text AS 'SELECT ''0.1-beta1''::text AS version;'
 LANGUAGE SQL;
+COMMENT ON FUNCTION HT_Version() IS
+	'HT: Get version. USAGE: HT_Version()';
 
 
 
@@ -395,6 +397,8 @@ return "History is enabled."
 
 $BODY$
 LANGUAGE 'plpythonu' VOLATILE;
+COMMENT ON FUNCTION HT_Init(text, text) IS
+	'HT: Enable history. USAGE: HT_Init(<schema>, <table>)';
 
 
 
@@ -460,6 +464,8 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql VOLATILE;
+COMMENT ON FUNCTION HT_Drop(text, text) IS
+	'HT: Disable history. USAGE: HT_Drop(<schema>, <table>)';
 
 
 
@@ -521,6 +527,8 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql VOLATILE;
+COMMENT ON FUNCTION HT_Tag(text, text, text) IS
+	'HT: Add tag. USAGE: HT_Tag(<schema>, <table>, <message>)';
 
 
 
@@ -531,6 +539,8 @@ $$
 	SELECT * FROM history_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
+COMMENT ON FUNCTION HT_Log(text, text) IS
+	'HT: Get log for given table. USAGE: HT_Log(<schema>, <table>)';
 
 --HT_Log()
 CREATE OR REPLACE FUNCTION HT_Log()
@@ -539,6 +549,8 @@ $$
 	SELECT * FROM history_tracker.tags ORDER BY id DESC;
 $$
 LANGUAGE 'SQL';
+COMMENT ON FUNCTION HT_Log() IS
+	'HT: Get log. USAGE: HT_Log()';
 
 
 
