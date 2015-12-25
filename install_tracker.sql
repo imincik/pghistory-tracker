@@ -248,7 +248,7 @@ sql_diffbetweentimes_funct = """
 				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(endtime)
 				WHERE %(pkey)s IN
 					(SELECT DISTINCT %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s
-						WHERE time_start > starttime AND time_start < endtime)
+						WHERE time_start >= starttime AND time_start < endtime)
 				AND %(pkey)s IN
 					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s_AtTime(starttime))
 
