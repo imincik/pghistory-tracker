@@ -188,7 +188,7 @@ sql_attime_funct = """
 	SELECT %(table_fields)s FROM history_tracker.%(dbschema)s__%(dbtable)s WHERE
 		( SELECT CASE WHEN time_end IS NULL THEN (time_start <= $1) ELSE (time_start <= $1 AND time_end > $1) END );
 	$$
-	LANGUAGE 'SQL';
+	LANGUAGE 'sql';
 """ % vars
 plpy.execute(sql_attime_funct)
 
@@ -538,7 +538,7 @@ CREATE OR REPLACE FUNCTION HT_Log(text, text)
 $$
 	SELECT * FROM history_tracker.tags WHERE dbschema = $1 AND dbtable = $2 ORDER BY id DESC;
 $$
-LANGUAGE 'SQL';
+LANGUAGE 'sql';
 COMMENT ON FUNCTION HT_Log(text, text) IS
 	'HT: Get log for given table. USAGE: HT_Log(<schema>, <table>)';
 
@@ -548,7 +548,7 @@ CREATE OR REPLACE FUNCTION HT_Log()
 $$
 	SELECT * FROM history_tracker.tags ORDER BY id DESC;
 $$
-LANGUAGE 'SQL';
+LANGUAGE 'sql';
 COMMENT ON FUNCTION HT_Log() IS
 	'HT: Get log. USAGE: HT_Log()';
 
