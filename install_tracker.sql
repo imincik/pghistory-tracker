@@ -237,6 +237,43 @@ sql_difftotime_funct = """
 """ % vars
 plpy.execute(sql_difftotime_funct)
 
+#Diff(timestamp, timestamp) function
+sql_diffbetweentimes_funct = """
+	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff(starttime timestamp, endtime timestamp)
+	RETURNS SETOF %(dbschema)s.ht_%(dbtable)s_difftype AS
+	$$
+	BEGIN
+		IF starttime >= (SELECT MIN(time_tag) FROM history_tracker.tags WHERE dbschema = '%(dbschema)s' AND dbtable = '%(dbtable)s') AND endtime <= (SELECT now()) THEN
+			RETURN QUERY
+				SELECT ':'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(endtime)
+				WHERE %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM history_tracker.%(dbschema)s__%(dbtable)s
+						WHERE time_start >= starttime AND time_start < endtime)
+				AND %(pkey)s IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s_AtTime(starttime))
+
+				UNION ALL
+
+				SELECT '+'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(endtime)
+				WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s_AtTime(starttime))
+
+				UNION ALL
+
+				SELECT '-'::character(1) AS operation, * FROM %(dbschema)s.%(dbtable)s_AtTime(starttime)
+				WHERE %(pkey)s NOT IN
+					(SELECT DISTINCT %(pkey)s FROM %(dbschema)s.%(dbtable)s_AtTime(endtime));
+
+		ELSE
+			RAISE WARNING 'Can not make diff because start or end time is outside history period.';
+			RETURN;
+		END IF;
+	END;
+	$$
+	LANGUAGE 'plpgsql';
+""" % vars
+plpy.execute(sql_diffbetweentimes_funct)
+
 #Diff() function
 sql_difftotime_funct = """
 	CREATE OR REPLACE FUNCTION %(dbschema)s.%(dbtable)s_Diff()

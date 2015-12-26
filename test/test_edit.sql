@@ -29,7 +29,7 @@ SET client_min_messages = WARNING;
 
 
 
-	SELECT plan(47);
+	SELECT plan(53);
 	
 	-- TEST EMPTY TABLE
 	SELECT is(ht_init('myschema', 'mytable'), 'History is enabled.', '*** Init history (empty table). ***');
@@ -66,6 +66,13 @@ SET client_min_messages = WARNING;
 		'VALUES (''+'', 1, 1, ''a'')',
 		'   => Test diff after INSERT #1.'
 	);
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert1'')) ORDER BY id',
+		'VALUES (''+'', 1, 1, ''a'')',
+		'   => Test diff between two timestamps after INSERT #1.'
+	);
 
 	-- INSERT #2
 	INSERT INTO myschema.mytable (aaa, bbb) VALUES (2, 'b');
@@ -97,6 +104,14 @@ SET client_min_messages = WARNING;
 		'VALUES (''+'', 1, 1, ''a''), (''+'', 2, 2, ''b''),
 		(''+'', 3, 3, ''c''), (''+'', 4, 4, ''d'')',
 		'   => Test diff after INSERT #2.'
+	);
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert1''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert2'')) ORDER BY id',
+		'VALUES (''+'', 2, 2, ''b''), (''+'', 3, 3, ''c''),
+		(''+'', 4, 4, ''d'')',
+		'   => Test diff between two timestamps after INSERT #2.'
 	);
 
 
@@ -131,6 +146,13 @@ SET client_min_messages = WARNING;
 		'VALUES (''+'', 1, 11, ''a''), (''+'', 2, 2, ''b''),
 		(''+'', 3, 3, ''c''), (''+'', 4, 4, ''d'')',
 		'   => Test diff after UPDATE #1.'
+	);
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_insert2''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update1'')) ORDER BY id',
+		'VALUES ('':'', 1, 11, ''a'')',
+		'   => Test diff between two timestamps after UPDATE #1.'
 	);
 
 	-- UPDATE #2
@@ -169,6 +191,14 @@ SET client_min_messages = WARNING;
 		(''+'', 3, 33, ''c''), (''+'', 4, 44, ''d'')',
 		'   => Test diff after UPDATE #2.'
 	);
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update1''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update2'')) ORDER BY id',
+		'VALUES ('':'', 2, 22, ''b''), ('':'', 3, 33, ''c''),
+		('':'', 4, 44, ''d'')',
+		'   => Test diff between two timestamps after UPDATE #2.'
+	);
 
 
 	-- DELETE #1
@@ -205,6 +235,13 @@ SET client_min_messages = WARNING;
 		'VALUES (''+'', 2, 22, ''b''),
 		(''+'', 3, 33, ''c''), (''+'', 4, 44, ''d'')',
 		'   => Test diff after DELETE #1.'
+	);
+	SELECT results_eq(
+		'SELECT operation::text, id, aaa, bbb::text FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_update2''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_delete1'')) ORDER BY id',
+		'VALUES (''-'', 1, 11, ''a'')',
+		'   => Test diff between two timestamps after DELETE #1.'
 	);
 
 	-- DELETE #2
@@ -243,6 +280,13 @@ SET client_min_messages = WARNING;
 			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_init''))',
 		'VALUES (0)',
 		'   => Test diff after DELETE #2.'
+	);
+	SELECT results_eq(
+		'SELECT COUNT(*)::integer FROM myschema.mytable_diff(
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_delete1''),
+			(SELECT creation FROM checkpoints WHERE name = ''checkpoint_empty_delete2''))',
+		'VALUES (3)',
+		'   => Test diff diff between two timestamps after DELETE #2.'
 	);
 
 	-- invalid tags
