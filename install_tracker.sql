@@ -485,6 +485,7 @@ BEGIN
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_Diff()';
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_AtTime(timestamp)';
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_Diff(timestamp)';
+	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_Diff(timestamp, timestamp)';
 	EXECUTE 'DROP FUNCTION ' || quote_ident(dbschema) || '.' || quote_ident(dbtable) || '_DiffToTag(integer)';
 
 	--TYPES
